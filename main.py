@@ -30,6 +30,15 @@ def calc_values_for_all_masks(
     return values
 
 
+def initialize_dp(
+    num_columns: int, num_masks: int, num_of_cards: int
+) -> list[list[list[float]]]:
+    return [
+        [[-float("inf")] * (num_of_cards + 1) for _ in range(num_masks)]
+        for _ in range(num_columns)
+    ]
+
+
 if __name__ == "__main__":
     num_of_cards = 3
     board = [[randint(LOW, HIGH) for _ in range(4)] for _ in range(ROWS)]
@@ -37,10 +46,11 @@ if __name__ == "__main__":
     valid_masks = generate_valid_masks(ROWS)
     values = calc_values_for_all_masks(valid_masks, board)
 
-    dp: list[list[list[float]]] = [
-        [[-float("inf")] * (num_of_cards + 1) for _ in valid_masks]
-        for _ in range(COLUMNS)
-    ]
+    dp: list[list[list[float]]] = initialize_dp(
+        COLUMNS,
+        len(valid_masks),
+        num_of_cards,
+    )
 
     for i, mask in enumerate(valid_masks):
         count = bin(mask).count("1")
