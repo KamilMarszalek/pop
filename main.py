@@ -1,7 +1,9 @@
-import random
+from random import randint
 
 COLUMNS = 4
-ROWS = 4
+ROWS = 20
+LOW = 0
+HIGH = 10
 
 
 def generate_valid_masks(num_of_rows: int) -> list[int]:
@@ -29,8 +31,8 @@ def calc_values_for_all_masks(
 
 
 if __name__ == "__main__":
-    num_of_cards = 6
-    board = [[random.randint(-10, 10) for _ in range(4)] for _ in range(ROWS)]
+    num_of_cards = 7
+    board = [[randint(LOW, HIGH) for _ in range(4)] for _ in range(ROWS)]
     print(board)
     valid_masks = generate_valid_masks(ROWS)
     values = calc_values_for_all_masks(valid_masks, board)
