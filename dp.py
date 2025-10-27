@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from random import randint
 
 type Board2D = list[list[int]]
-type Memo = dict[int, dict[int, float]]
 
 
 @dataclass
@@ -11,8 +10,13 @@ class Range:
     high: int
 
 
+@dataclass
+class Memo:
+    current_row: list[float]
+    next_row: list[float]
+
+
 N = 4
-M = N * N
 
 
 def generate_board(rows: int, columns: int, r: Range) -> Board2D:
@@ -28,6 +32,10 @@ def generate_non_adjacent_masks(size: int) -> list[int]:
     return valid_masks
 
 
+def create_mask_index_map(masks: list[int]) -> dict[int, int]:
+    return {mask: i for i, mask in enumerate(masks)}
+
+
 def calculate_row_sum(row: list[int], mask: int) -> int:
     sum: int = 0
     for i, number in enumerate(row):
@@ -36,40 +44,40 @@ def calculate_row_sum(row: list[int], mask: int) -> int:
     return sum
 
 
-def initalize_memo(n_rows: int, masks: list[int]) -> Memo:
-    return {i: {mask: float("-inf") for mask in masks} for i in range(n_rows)}
+def create_memo(masks: list[int]) -> Memo:
+    n_masks = len(masks)
+    current_row = [float("-inf")] * n_masks
+    next_row = [0.0] * n_masks
+    return Memo(current_row, next_row)
 
 
-def mwis_dp(board: Board2D, max_cards: int) -> int:
-    n_rows = len(board)
-    n_columns = len(board[0])
-    possible_masks = generate_non_adjacent_masks(n_columns)
-    memo = initalize_memo(n_rows, possible_masks)
+def mwis_dp(board: Board2D, max_cards: int) -> float:
+    possible_masks = generate_non_adjacent_masks(len(board[0]))
+    index_map = create_mask_index_map(possible_masks)
+    memo = create_memo(possible_masks)
 
-    def dp(row_index: int, previous_mask: int, cards_used: int) -> float:
-        if row_index == n_rows or cards_used == max_cards:
-            return 0
-        if memo[row_index][previous_mask] == float("-inf"):
+    for row_index in range(len(board) - 1, -1, -1):
+        for previous_mask in possible_masks:
+            if memo.current_row[index_map[previous_mask]] != float("-inf"):
+                continue
             max_sum = float("-inf")
             for mask in possible_masks:
-                positive_bits = mask.bit_count()
-                if not (previous_mask & mask) and positive_bits <= (
-                    max_cards - cards_used
-                ):
+                if not (previous_mask & mask):
                     max_sum = max(
                         max_sum,
                         calculate_row_sum(board[row_index], mask)
-                        + dp(row_index + 1, mask, cards_used + positive_bits),
+                        + memo.next_row[index_map[mask]],
                     )
-            memo[row_index][previous_mask] = max_sum
-        return memo[row_index][previous_mask]
+            memo.current_row[index_map[previous_mask]] = int(max_sum)
+        memo.next_row = memo.current_row
+        memo.current_row = [float("-inf")] * len(possible_masks)
 
-    return int(dp(0, 0, 0))
+    return memo.next_row[0]
 
 
 def main() -> None:
-    board = generate_board(1000, N, Range(-10, 10))
-    result = mwis_dp(board, M)
+    board = generate_board(200, N, Range(-10, 10))
+    result = mwis_dp(board, 10 * N)
     print(f"Board: {board}")
     print(f"Total sum: {result}")
 
