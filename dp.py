@@ -32,10 +32,6 @@ def generate_non_adjacent_masks(size: int) -> list[int]:
     return valid_masks
 
 
-def create_mask_index_map(masks: list[int]) -> dict[int, int]:
-    return {mask: i for i, mask in enumerate(masks)}
-
-
 def calculate_row_sum(row: list[int], mask: int) -> int:
     sum: int = 0
     for i, number in enumerate(row):
@@ -53,22 +49,20 @@ def create_memo(masks: list[int]) -> Memo:
 
 def mwis_dp(board: Board2D, max_cards: int) -> float:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
-    index_map = create_mask_index_map(possible_masks)
     memo = create_memo(possible_masks)
 
     for row_index in range(len(board) - 1, -1, -1):
-        for previous_mask in possible_masks:
-            if memo.current_row[index_map[previous_mask]] != float("-inf"):
+        for i, previous_mask in enumerate(possible_masks):
+            if memo.current_row[i] != float("-inf"):
                 continue
             max_sum = float("-inf")
-            for mask in possible_masks:
+            for j, mask in enumerate(possible_masks):
                 if not (previous_mask & mask):
                     max_sum = max(
                         max_sum,
-                        calculate_row_sum(board[row_index], mask)
-                        + memo.next_row[index_map[mask]],
+                        calculate_row_sum(board[row_index], mask) + memo.next_row[j],
                     )
-            memo.current_row[index_map[previous_mask]] = int(max_sum)
+            memo.current_row[i] = int(max_sum)
         memo.next_row = memo.current_row
         memo.current_row = [float("-inf")] * len(possible_masks)
 
@@ -76,8 +70,9 @@ def mwis_dp(board: Board2D, max_cards: int) -> float:
 
 
 def main() -> None:
-    board = generate_board(200, N, Range(-10, 10))
-    result = mwis_dp(board, 10 * N)
+    n_rows = 4
+    board = generate_board(n_rows, N, Range(-10, 10))
+    result = mwis_dp(board, n_rows * N)
     print(f"Board: {board}")
     print(f"Total sum: {result}")
 
