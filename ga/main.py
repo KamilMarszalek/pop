@@ -75,10 +75,10 @@ class Unit:
 
 def q(unit: "Unit", board: list[list[int]]) -> int:
     reward = 0
-    for mask, col_board in zip(unit, board):
-        bits = [int(bit) for bit in bin(mask)]
-        for bit, value in zip(bits, col_board):
-            reward += bit * value
+    for mask, col_board in zip(unit.genes, board):
+        for row in range(4):
+            if (mask >> row) & 1:
+                reward += col_board[row]
     return reward
 
 
@@ -150,6 +150,8 @@ def crossing(
         unit1 = choice(population)
         population.remove(unit1)
         if uniform(0, 1) < probability_of_crossing:
+            unit2 = choice(population)
+            population.remove(unit2)
             new_unit1, new_unit2 = unit1.cross(unit2)
 
 
