@@ -2,13 +2,10 @@ from random import choice
 
 
 class Unit:
-    def __init__(
-        self, num_of_rows: int, num_of_cards: int, board: list[list[int]]
-    ) -> None:
+    def __init__(self, num_of_rows: int, num_of_cards: int) -> None:
         self.choices = generate_non_adjacent_masks(4)
         self.genes = [choice(self.choices) for _ in range(num_of_rows)]
         self.num_of_cards = num_of_cards
-        self.board = board
         self.repair()
 
     def repair(self) -> None:
