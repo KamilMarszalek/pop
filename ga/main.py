@@ -26,11 +26,12 @@ class Unit:
         return str(self.genes)
 
 
-def q(individual: list[list[int]], board: list[list[int]]) -> int:
+def q(unit: "Unit", board: list[list[int]]) -> int:
     reward = 0
-    for col_ind, col_board in zip(individual, board):
-        for ind, value in zip(col_ind, col_board):
-            reward += ind * value
+    for mask, col_board in zip(unit, board):
+        bits = [int(bit) for bit in bin(mask)]
+        for bit, value in zip(bits, col_board):
+            reward += bit * value
     return reward
 
 
@@ -52,3 +53,14 @@ def generate_starting_population(
     population_count: int, num_of_rows: int, num_of_cards: int
 ) -> list[list[int]]:
     return [Unit(num_of_rows, num_of_cards) for _ in range(population_count)]
+
+
+def genetic_algorithm(
+    q: callable,
+    population_count: int,
+    probability_of_mutation: float,
+    probability_of_crossing: float,
+    tmax: int,
+    starting_population: list[list[int]] = None,
+) -> list[list[int]]:
+    pass
