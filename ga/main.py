@@ -2,17 +2,25 @@ from random import choice
 
 
 class Unit:
-    def __init__(self, num_of_rows: int, num_of_cards: int) -> None:
+    def __init__(
+        self, num_of_rows: int, num_of_cards: int, board: list[list[int]]
+    ) -> None:
         self.choices = generate_non_adjacent_masks(4)
         self.genes = [choice(self.choices) for _ in range(num_of_rows)]
         self.num_of_cards = num_of_cards
+        self.board = board
+        self.repair()
 
-    def repair(self, num_of_cards: int) -> None:
+    def repair(self) -> None:
         for i in range(1, len(self.genes)):
-            self.genes[i] &= self.genes[i - 1]
+            self.genes[i] &= ~self.genes[i - 1]
         num_of_cards_used = sum(x.bit_count() for x in self.genes)
-        if num_of_cards_used > num_of_cards:
-            pass
+        while num_of_cards_used > self.num_of_cards:
+            column = choice([i for i, g in enumerate(self.genes) if g != 0])
+            ones = [bit for bit in range(4) if (self.genes[column] >> bit) & 1]
+            bit_to_remove = choice(ones)
+            self.genes[column] &= ~(1 << bit_to_remove)
+            num_of_cards_used -= 1
 
 
 def q(individual: list[list[int]], board: list[list[int]]) -> int:
