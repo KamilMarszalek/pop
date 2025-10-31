@@ -70,6 +70,7 @@ class Unit:
                 + self.genes[crossing_points[0] : crossing_points[1]]
                 + other.genes[crossing_points[1] :],
             )
+            return new_unit1, new_unit2
 
 
 def q(unit: "Unit", board: list[list[int]]) -> int:
