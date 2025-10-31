@@ -1,4 +1,5 @@
-from random import choice
+from random import choice, uniform
+from itertools import combinations
 
 
 class Unit:
@@ -31,6 +32,44 @@ class Unit:
 
     def __repr__(self) -> str:
         return str(self.genes)
+
+    def cross(self, other: "Unit") -> tuple["Unit", "Unit"]:
+        num_of_crossing_points = 2 if len(self.genes) > 2 else 1
+        num_of_rows = len(self.genes)
+        crossing_points = choice(
+            list(
+                combinations(
+                    [x for x in range(1, num_of_rows - 1)], num_of_crossing_points
+                )
+            )
+        )
+        if num_of_crossing_points == 1:
+            new_unit1 = Unit(
+                num_of_rows,
+                self.num_of_cards,
+                self.genes[: crossing_points[0]] + other.genes[crossing_points[0] :],
+            )
+            new_unit2 = Unit(
+                num_of_rows,
+                self.num_of_cards,
+                other.genes[: crossing_points[0]] + self.genes[crossing_points[0] :],
+            )
+            return new_unit1, new_unit2
+        elif num_of_crossing_points == 2:
+            new_unit1 = Unit(
+                num_of_rows,
+                self.num_of_cards,
+                self.genes[: crossing_points[0]]
+                + other.genes[crossing_points[0] : crossing_points[1]]
+                + self.genes[crossing_points[1] :],
+            )
+            new_unit2 = Unit(
+                num_of_rows,
+                self.num_of_cards,
+                other.genes[: crossing_points[0]]
+                + self.genes[crossing_points[0] : crossing_points[1]]
+                + other.genes[crossing_points[1] :],
+            )
 
 
 def q(unit: "Unit", board: list[list[int]]) -> int:
@@ -103,10 +142,14 @@ def reproduction(
 
 
 def crossing(
-    population: list["Unit"],
-    probability_of_crossing: float,
+    population: list["Unit"], probability_of_crossing: float, population_count: int
 ) -> list["Unit"]:
-    pass
+    new_population = []
+    while len(new_population) < population_count:
+        unit1 = choice(population)
+        population.remove(unit1)
+        if uniform(0, 1) < probability_of_crossing:
+            new_unit1, new_unit2 = unit1.cross(unit2)
 
 
 def genetic_algorithm(
