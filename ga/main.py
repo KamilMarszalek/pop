@@ -19,6 +19,12 @@ class Unit:
             self.genes[column] &= ~(1 << bit_to_remove)
             num_of_cards_used -= 1
 
+    def __str__(self) -> str:
+        return str(self.genes)
+
+    def __repr__(self) -> str:
+        return str(self.genes)
+
 
 def q(individual: list[list[int]], board: list[list[int]]) -> int:
     reward = 0
