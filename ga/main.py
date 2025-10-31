@@ -2,9 +2,16 @@ from random import choice
 
 
 class Unit:
-    def __init__(self, num_of_rows: int, num_of_cards: int) -> None:
+    def __init__(
+        self,
+        num_of_rows: int,
+        num_of_cards: int,
+        genes: list[list[int]] = None,
+    ) -> None:
         self.choices = generate_non_adjacent_masks(4)
-        self.genes = [choice(self.choices) for _ in range(num_of_rows)]
+        self.genes = (
+            [choice(self.choices) for _ in range(num_of_rows)] if not genes else genes
+        )
         self.num_of_cards = num_of_cards
         self.repair()
 
@@ -44,15 +51,62 @@ def generate_non_adjacent_masks(size: int) -> list[int]:
     return valid_masks
 
 
-def repair_unit(unit: list[int], num_of_cards: int) -> list[int]:
-    for i in range(1, len(unit)):
-        unit[i] &= unit[i - 1]
-
-
 def generate_starting_population(
     population_count: int, num_of_rows: int, num_of_cards: int
-) -> list[list[int]]:
+) -> list["Unit"]:
     return [Unit(num_of_rows, num_of_cards) for _ in range(population_count)]
+
+
+def get_population_evaluation(
+    population: list["Unit"], board: list[list[int]]
+) -> dict["Unit", int]:
+    evaluation = {}
+    for u in population:
+        evaluation[u] = q(u, board)
+    return evaluation
+
+
+def find_best_unit(
+    population: list["Unit"], evaluations: dict["Unit", int]
+) -> tuple["Unit", int]:
+    best_unit = population[0]
+    best_value = evaluations[best_unit]
+    for unit in population:
+        evaluation = evaluations[unit]
+        if evaluation > best_value:
+            best_unit = unit
+            best_value = evaluation
+    return best_unit, best_value
+
+
+def stop(t: int, t_max: int):
+    return t > t_max
+
+
+def reproduction(
+    population: list["Unit"],
+    evaluations: dict["Unit", int],
+    population_count: int,
+) -> list["Unit"]:
+    """tournament"""
+    new_population = []
+    for _ in range(population_count):
+        unit1 = choice(population)
+        unit2 = choice(population)
+        eval1 = evaluations[unit1]
+        eval2 = evaluations[unit2]
+        if eval1 >= eval2:
+            new_population.append(unit1)
+        else:
+            new_population.append(unit2)
+    return new_population
+
+
+def crossing(
+    population: list["Unit"],
+    probability_of_crossing: float,
+) -> list["Unit"]:
+    pass
 
 
 def genetic_algorithm(
@@ -60,7 +114,23 @@ def genetic_algorithm(
     population_count: int,
     probability_of_mutation: float,
     probability_of_crossing: float,
-    tmax: int,
-    starting_population: list[list[int]] = None,
+    t_max: int,
+    num_of_rows: int,
+    num_of_cards: int,
+    starting_population: list["Unit"] = None,
 ) -> list[list[int]]:
-    pass
+    population = (
+        starting_population
+        if starting_population
+        else generate_starting_population(
+            population_count,
+            num_of_rows,
+            num_of_cards,
+        )
+    )
+    t = 0
+    evaluations = get_population_evaluation(population)
+    best_unit, best_value = find_best_unit(population, evaluations)
+    while not stop(t, t_max):
+        r = reproduction(population, evaluations, population_count)
+        c = crossing(r, probability_of_crossing)
