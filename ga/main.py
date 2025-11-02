@@ -145,7 +145,7 @@ def reproduction(
 
 def crossover(
     population: Population,
-    probability_of_crossing: float,
+    probability_of_crossover: float,
     population_count: int,
 ) -> Population:
     population_copy = deepcopy(population)
@@ -155,7 +155,7 @@ def crossover(
         population_copy.remove(unit1)
         unit2 = choice(population_copy)
         population_copy.remove(unit2)
-        if uniform(0, 1) < probability_of_crossing:
+        if uniform(0, 1) < probability_of_crossover:
             new_unit1, new_unit2 = unit1.cross(unit2)
             new_population.extend([new_unit1, new_unit2])
         else:
@@ -199,7 +199,7 @@ def genetic_algorithm(
     q: callable,
     population_count: int,
     probability_of_mutation: float,
-    probability_of_crossing: float,
+    probability_of_crossover: float,
     t_max: int,
     num_of_columns: int,
     num_of_cards: int,
@@ -221,7 +221,7 @@ def genetic_algorithm(
     best_unit, best_value = find_best_unit(population, evaluations)
     while not stop(t, t_max):
         r = reproduction(population, evaluations, population_count)
-        c = crossover(r, probability_of_crossing)
+        c = crossover(r, probability_of_crossover)
         m = mutation(c, probability_of_mutation)
         m_evaluations = get_population_evaluation(m, board)
         best_candidate, best_candidate_evaluation = find_best_unit(
