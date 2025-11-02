@@ -140,7 +140,7 @@ def reproduction(
     return new_population
 
 
-def crossing(
+def crossover(
     population: list["Unit"],
     probability_of_crossing: float,
     population_count: int,
@@ -218,7 +218,7 @@ def genetic_algorithm(
     best_unit, best_value = find_best_unit(population, evaluations)
     while not stop(t, t_max):
         r = reproduction(population, evaluations, population_count)
-        c = crossing(r, probability_of_crossing)
+        c = crossover(r, probability_of_crossing)
         m = mutation(c, probability_of_mutation)
         m_evaluations = get_population_evaluation(m, board)
         best_candidate, best_candidate_evaluation = find_best_unit(
