@@ -1,6 +1,7 @@
 from random import choice, uniform
 from itertools import combinations
 from copy import deepcopy
+import heapq
 
 
 class Unit:
@@ -174,10 +175,21 @@ def mutation(
 
 def elitism(
     new_population: list["Unit"],
+    board: list[list[int]],
     old_population: list["Unit"] = None,
     num_of_best_survivors: int = 0,
 ):
-    pass
+    if num_of_best_survivors <= 0:
+        return new_population
+    best_survivors = heapq.nlargest(
+        num_of_best_survivors, old_population, key=lambda x: q(x, board)
+    )
+    worst_offsprings = heapq.nsmallest(
+        num_of_best_survivors, new_population, key=lambda x: q(x, board)
+    )
+    new_population.extend(best_survivors)
+    new_population = [unit for unit in new_population if unit not in worst_offsprings]
+    return new_population
 
 
 def genetic_algorithm(
@@ -188,9 +200,10 @@ def genetic_algorithm(
     t_max: int,
     num_of_columns: int,
     num_of_cards: int,
+    board: list[list[int]],
     num_of_best_survivors: int = 0,
     starting_population: list["Unit"] = None,
-) -> list[list[int]]:
+) -> tuple["Unit", int]:
     population = (
         starting_population
         if starting_population
@@ -201,13 +214,13 @@ def genetic_algorithm(
         )
     )
     t = 0
-    evaluations = get_population_evaluation(population)
+    evaluations = get_population_evaluation(population, board)
     best_unit, best_value = find_best_unit(population, evaluations)
     while not stop(t, t_max):
         r = reproduction(population, evaluations, population_count)
         c = crossing(r, probability_of_crossing)
         m = mutation(c, probability_of_mutation)
-        m_evaluations = get_population_evaluation(m)
+        m_evaluations = get_population_evaluation(m, board)
         best_candidate, best_candidate_evaluation = find_best_unit(
             m,
             m_evaluations,
@@ -215,6 +228,11 @@ def genetic_algorithm(
         if best_candidate_evaluation > best_value:
             best_unit = best_candidate
             best_value = best_candidate_evaluation
-        population = elitism(m)
-        evaluations = get_population_evaluation(population)
+        population = (
+            elitism(m)
+            if num_of_best_survivors <= 0
+            else elitism(m, population, num_of_best_survivors)
+        )
+        evaluations = get_population_evaluation(population, board)
         t += 1
+    return best_unit, best_value
