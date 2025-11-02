@@ -118,7 +118,7 @@ def find_best_unit(
 
 
 def stop(t: int, t_max: int):
-    return t > t_max
+    return t >= t_max
 
 
 def reproduction(
