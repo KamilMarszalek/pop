@@ -4,6 +4,8 @@ from copy import deepcopy
 import heapq
 
 type Population = list["Unit"]
+type Board = list[list[int]]
+type Genes = list[int]
 
 
 class Unit:
@@ -11,7 +13,7 @@ class Unit:
         self,
         num_of_columns: int,
         num_of_cards: int,
-        genes: list[list[int]] = None,
+        genes: Genes = None,
     ) -> None:
         self.choices = generate_non_adjacent_masks(4)
         self.genes = (
@@ -73,7 +75,7 @@ class Unit:
         self.repair()
 
 
-def q(unit: "Unit", board: list[list[int]]) -> int:
+def q(unit: "Unit", board: Board) -> int:
     reward = 0
     for mask, col_board in zip(unit.genes, board):
         for row in range(4):
@@ -98,7 +100,7 @@ def generate_starting_population(
 
 
 def get_population_evaluation(
-    population: Population, board: list[list[int]]
+    population: Population, board: Board
 ) -> dict["Unit", int]:
     evaluation = {}
     for u in population:
@@ -177,7 +179,7 @@ def mutation(
 
 def elitism(
     new_population: Population,
-    board: list[list[int]],
+    board: Board,
     old_population: Population = None,
     num_of_best_survivors: int = 0,
 ):
@@ -202,7 +204,7 @@ def genetic_algorithm(
     t_max: int,
     num_of_columns: int,
     num_of_cards: int,
-    board: list[list[int]],
+    board: Board,
     num_of_best_survivors: int = 0,
     starting_population: Population = None,
 ) -> tuple["Unit", int]:
