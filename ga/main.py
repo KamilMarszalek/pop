@@ -175,7 +175,7 @@ def mutation(
 
 def elitism(
     new_population: list["Unit"],
-    board: list[list[int]] = None,
+    board: list[list[int]],
     old_population: list["Unit"] = None,
     num_of_best_survivors: int = 0,
 ):
@@ -229,7 +229,7 @@ def genetic_algorithm(
             best_unit = best_candidate
             best_value = best_candidate_evaluation
         population = (
-            elitism(new_population=m)
+            m
             if num_of_best_survivors <= 0
             else elitism(m, population, num_of_best_survivors)
         )
