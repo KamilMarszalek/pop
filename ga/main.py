@@ -51,12 +51,23 @@ class Unit:
                 return Unit(num_genes, self.num_of_cards, a[:p] + b[p:])
             else:
                 p1, p2 = points
-                return Unit(num_genes, self.num_of_cards, a[:p1] + b[p1:p2] + a[p2:])
+                return Unit(
+                    num_genes,
+                    self.num_of_cards,
+                    a[:p1] + b[p1:p2] + a[p2:],
+                )
 
         child1 = build_child(self.genes, other.genes, points)
         child2 = build_child(other.genes, self.genes, points)
 
         return child1, child2
+
+    def mutate(self, probability_of_mutation: float) -> None:
+        for column in self.genes:
+            for row in range(4):
+                if uniform(0, 1) < probability_of_mutation:
+                    column ^= 1 << row
+        self.repair()
 
 
 def q(unit: "Unit", board: list[list[int]]) -> int:
@@ -129,7 +140,9 @@ def reproduction(
 
 
 def crossing(
-    population: list["Unit"], probability_of_crossing: float, population_count: int
+    population: list["Unit"],
+    probability_of_crossing: float,
+    population_count: int,
 ) -> list["Unit"]:
     population_copy = deepcopy(population)
     new_population = []
@@ -147,6 +160,18 @@ def crossing(
     return new_population
 
 
+def mutation(
+    population: list["Unit"],
+    probability_of_mutation: float,
+) -> list["Unit"]:
+    population_copy = deepcopy(population)
+    new_population = []
+    for unit in population_copy:
+        unit.mutate(probability_of_mutation)
+        new_population.append(unit)
+    return new_population
+
+
 def genetic_algorithm(
     q: callable,
     population_count: int,
@@ -155,6 +180,7 @@ def genetic_algorithm(
     t_max: int,
     num_of_columns: int,
     num_of_cards: int,
+    num_of_best_survivors: int = 0,
     starting_population: list["Unit"] = None,
 ) -> list[list[int]]:
     population = (
@@ -172,3 +198,13 @@ def genetic_algorithm(
     while not stop(t, t_max):
         r = reproduction(population, evaluations, population_count)
         c = crossing(r, probability_of_crossing)
+        m = mutation(c, probability_of_mutation)
+        evaluations = get_population_evaluation(m)
+        best_candidate, best_candidate_evaluation = find_best_unit(
+            m,
+            evaluations,
+        )
+        if best_candidate_evaluation > best_value:
+            best_unit = best_candidate
+            best_value = best_candidate_evaluation
+        population = elitism(population, num_of_best_survivors)
