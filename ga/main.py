@@ -184,12 +184,8 @@ def elitism(
     best_survivors = heapq.nlargest(
         num_of_best_survivors, old_population, key=lambda x: q(x, board)
     )
-    worst_offsprings = heapq.nsmallest(
-        num_of_best_survivors, new_population, key=lambda x: q(x, board)
-    )
-    new_population.extend(best_survivors)
-    new_population = [unit for unit in new_population if unit not in worst_offsprings]
-    return new_population
+    new_population.sort(key=lambda x: q(x, board))
+    return new_population[num_of_best_survivors:] + best_survivors
 
 
 def genetic_algorithm(
