@@ -3,6 +3,8 @@ from itertools import combinations
 from copy import deepcopy
 import heapq
 
+type Population = list["Unit"]
+
 
 class Unit:
     def __init__(
@@ -91,12 +93,12 @@ def generate_non_adjacent_masks(size: int) -> list[int]:
 
 def generate_starting_population(
     population_count: int, num_of_columns: int, num_of_cards: int
-) -> list["Unit"]:
+) -> Population:
     return [Unit(num_of_columns, num_of_cards) for _ in range(population_count)]
 
 
 def get_population_evaluation(
-    population: list["Unit"], board: list[list[int]]
+    population: Population, board: list[list[int]]
 ) -> dict["Unit", int]:
     evaluation = {}
     for u in population:
@@ -105,7 +107,7 @@ def get_population_evaluation(
 
 
 def find_best_unit(
-    population: list["Unit"], evaluations: dict["Unit", int]
+    population: Population, evaluations: dict["Unit", int]
 ) -> tuple["Unit", int]:
     best_unit = population[0]
     best_value = evaluations[best_unit]
@@ -122,10 +124,10 @@ def stop(t: int, t_max: int):
 
 
 def reproduction(
-    population: list["Unit"],
+    population: Population,
     evaluations: dict["Unit", int],
     population_count: int,
-) -> list["Unit"]:
+) -> Population:
     """tournament"""
     new_population = []
     for _ in range(population_count):
@@ -141,10 +143,10 @@ def reproduction(
 
 
 def crossover(
-    population: list["Unit"],
+    population: Population,
     probability_of_crossing: float,
     population_count: int,
-) -> list["Unit"]:
+) -> Population:
     population_copy = deepcopy(population)
     new_population = []
     while len(new_population) < population_count:
@@ -162,9 +164,9 @@ def crossover(
 
 
 def mutation(
-    population: list["Unit"],
+    population: Population,
     probability_of_mutation: float,
-) -> list["Unit"]:
+) -> Population:
     population_copy = deepcopy(population)
     new_population = []
     for unit in population_copy:
@@ -174,9 +176,9 @@ def mutation(
 
 
 def elitism(
-    new_population: list["Unit"],
+    new_population: Population,
     board: list[list[int]],
-    old_population: list["Unit"] = None,
+    old_population: Population = None,
     num_of_best_survivors: int = 0,
 ):
     if num_of_best_survivors <= 0:
@@ -202,7 +204,7 @@ def genetic_algorithm(
     num_of_cards: int,
     board: list[list[int]],
     num_of_best_survivors: int = 0,
-    starting_population: list["Unit"] = None,
+    starting_population: Population = None,
 ) -> tuple["Unit", int]:
     population = (
         starting_population
