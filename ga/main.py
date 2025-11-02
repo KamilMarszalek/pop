@@ -68,10 +68,9 @@ class Unit:
         return child1, child2
 
     def mutate(self, probability_of_mutation: float) -> None:
-        for column in self.genes:
-            for row in range(4):
-                if uniform(0, 1) < probability_of_mutation:
-                    column ^= 1 << row
+        for i in range(len(self.genes)):
+            if uniform(0, 1) < probability_of_mutation:
+                self.genes[i] = choice(self.choices)
         self.repair()
 
 
