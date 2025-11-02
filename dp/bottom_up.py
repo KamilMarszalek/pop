@@ -1,4 +1,4 @@
-from dp.util import calculate_row_sum, generate_non_adjacent_masks
+from util.util import calculate_row_sum, generate_non_adjacent_masks
 
 type Memoization = dict[int, dict[int, float]]
 

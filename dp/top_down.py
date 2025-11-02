@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .util import (
+from util.util import (
     calculate_row_sum,
     generate_non_adjacent_masks,
 )
