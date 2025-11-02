@@ -172,6 +172,14 @@ def mutation(
     return new_population
 
 
+def elitism(
+    new_population: list["Unit"],
+    old_population: list["Unit"] = None,
+    num_of_best_survivors: int = 0,
+):
+    pass
+
+
 def genetic_algorithm(
     q: callable,
     population_count: int,
@@ -199,12 +207,14 @@ def genetic_algorithm(
         r = reproduction(population, evaluations, population_count)
         c = crossing(r, probability_of_crossing)
         m = mutation(c, probability_of_mutation)
-        evaluations = get_population_evaluation(m)
+        m_evaluations = get_population_evaluation(m)
         best_candidate, best_candidate_evaluation = find_best_unit(
             m,
-            evaluations,
+            m_evaluations,
         )
         if best_candidate_evaluation > best_value:
             best_unit = best_candidate
             best_value = best_candidate_evaluation
-        population = elitism(population, num_of_best_survivors)
+        population = elitism(m)
+        evaluations = get_population_evaluation(population)
+        t += 1
