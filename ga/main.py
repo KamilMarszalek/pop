@@ -1,17 +1,20 @@
 from random import choice, uniform
 from itertools import combinations
+from copy import deepcopy
 
 
 class Unit:
     def __init__(
         self,
-        num_of_rows: int,
+        num_of_columns: int,
         num_of_cards: int,
         genes: list[list[int]] = None,
     ) -> None:
         self.choices = generate_non_adjacent_masks(4)
         self.genes = (
-            [choice(self.choices) for _ in range(num_of_rows)] if not genes else genes
+            [choice(self.choices) for _ in range(num_of_columns)]
+            if not genes
+            else genes
         )
         self.num_of_cards = num_of_cards
         self.repair()
@@ -34,43 +37,26 @@ class Unit:
         return str(self.genes)
 
     def cross(self, other: "Unit") -> tuple["Unit", "Unit"]:
-        num_of_crossing_points = 2 if len(self.genes) > 2 else 1
-        num_of_rows = len(self.genes)
-        crossing_points = choice(
-            list(
-                combinations(
-                    [x for x in range(1, num_of_rows - 1)], num_of_crossing_points
-                )
-            )
-        )
-        if num_of_crossing_points == 1:
-            new_unit1 = Unit(
-                num_of_rows,
-                self.num_of_cards,
-                self.genes[: crossing_points[0]] + other.genes[crossing_points[0] :],
-            )
-            new_unit2 = Unit(
-                num_of_rows,
-                self.num_of_cards,
-                other.genes[: crossing_points[0]] + self.genes[crossing_points[0] :],
-            )
-            return new_unit1, new_unit2
-        elif num_of_crossing_points == 2:
-            new_unit1 = Unit(
-                num_of_rows,
-                self.num_of_cards,
-                self.genes[: crossing_points[0]]
-                + other.genes[crossing_points[0] : crossing_points[1]]
-                + self.genes[crossing_points[1] :],
-            )
-            new_unit2 = Unit(
-                num_of_rows,
-                self.num_of_cards,
-                other.genes[: crossing_points[0]]
-                + self.genes[crossing_points[0] : crossing_points[1]]
-                + other.genes[crossing_points[1] :],
-            )
-            return new_unit1, new_unit2
+        num_genes = len(self.genes)
+        if num_genes <= 2:
+            k = 1
+        else:
+            k = 2
+
+        points = choice(list(combinations(range(1, num_genes), k)))
+
+        def build_child(a, b, points):
+            if len(points) == 1:
+                p = points[0]
+                return Unit(num_genes, self.num_of_cards, a[:p] + b[p:])
+            else:
+                p1, p2 = points
+                return Unit(num_genes, self.num_of_cards, a[:p1] + b[p1:p2] + a[p2:])
+
+        child1 = build_child(self.genes, other.genes, points)
+        child2 = build_child(other.genes, self.genes, points)
+
+        return child1, child2
 
 
 def q(unit: "Unit", board: list[list[int]]) -> int:
@@ -92,9 +78,9 @@ def generate_non_adjacent_masks(size: int) -> list[int]:
 
 
 def generate_starting_population(
-    population_count: int, num_of_rows: int, num_of_cards: int
+    population_count: int, num_of_columns: int, num_of_cards: int
 ) -> list["Unit"]:
-    return [Unit(num_of_rows, num_of_cards) for _ in range(population_count)]
+    return [Unit(num_of_columns, num_of_cards) for _ in range(population_count)]
 
 
 def get_population_evaluation(
@@ -145,14 +131,20 @@ def reproduction(
 def crossing(
     population: list["Unit"], probability_of_crossing: float, population_count: int
 ) -> list["Unit"]:
+    population_copy = deepcopy(population)
     new_population = []
     while len(new_population) < population_count:
-        unit1 = choice(population)
-        population.remove(unit1)
+        unit1 = choice(population_copy)
+        population_copy.remove(unit1)
+        unit2 = choice(population_copy)
+        population_copy.remove(unit2)
         if uniform(0, 1) < probability_of_crossing:
-            unit2 = choice(population)
-            population.remove(unit2)
             new_unit1, new_unit2 = unit1.cross(unit2)
+            new_population.extend([new_unit1, new_unit2])
+        else:
+            new_population.extend([unit1, unit2])
+
+    return new_population
 
 
 def genetic_algorithm(
@@ -161,7 +153,7 @@ def genetic_algorithm(
     probability_of_mutation: float,
     probability_of_crossing: float,
     t_max: int,
-    num_of_rows: int,
+    num_of_columns: int,
     num_of_cards: int,
     starting_population: list["Unit"] = None,
 ) -> list[list[int]]:
@@ -170,7 +162,7 @@ def genetic_algorithm(
         if starting_population
         else generate_starting_population(
             population_count,
-            num_of_rows,
+            num_of_columns,
             num_of_cards,
         )
     )
