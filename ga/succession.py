@@ -19,8 +19,8 @@ def elitism(
     new_population = m_population[num_of_best_survivors:] + best_survivors
     new_evaluation = {}
     for unit in new_population:
-        if unit in m_evaluation.keys():
+        if unit in m_evaluation:
             new_evaluation[unit] = m_evaluation[unit]
-        elif unit in old_evaluation.keys():
+        elif unit in old_evaluation:
             new_evaluation[unit] = old_evaluation[unit]
     return new_population, new_evaluation

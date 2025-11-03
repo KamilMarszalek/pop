@@ -35,9 +35,7 @@ class GeneticAlgorithm:
         self.population = (
             starting_population
             if starting_population
-            else self._generate_starting_population(
-                population_count, len(board), num_of_cards
-            )
+            else self._generate_starting_population()
         )
         self.evaluation = self._get_population_evaluation(self.population)
         self.best_unit, self.best_value = self._find_best_unit(
@@ -56,8 +54,7 @@ class GeneticAlgorithm:
     ) -> dict["Unit", int]:
         evaluation = {}
         for u in population:
-            evaluation[u] = self.q(u, self.board)
-        self.t += 1
+            evaluation[u] = self._q(u, self.board)
         return evaluation
 
     def _find_best_unit(
@@ -69,7 +66,7 @@ class GeneticAlgorithm:
             evaluation = evaluations[unit]
             if evaluation > best_value:
                 best_unit = unit
-                best_value = best_value
+                best_value = evaluation
         return best_unit, best_value
 
     def _stop(self) -> bool:
@@ -91,7 +88,6 @@ class GeneticAlgorithm:
         self.m_population = self._mutation(
             self.c_population,
             self.probability_of_mutation,
-            self.population_count,
         )
 
     def succession(self) -> None:
@@ -118,4 +114,5 @@ class GeneticAlgorithm:
                 self.best_unit = best_candidate
                 self.best_value = best_candidate_evaluation
             self.succession()
+            self.t += 1
         return self.best_unit, self.best_value
