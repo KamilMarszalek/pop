@@ -13,3 +13,11 @@ def calculate_row_sum(row: list[int], mask: int) -> int:
         if mask >> (len(row) - i - 1) & 1:
             sum += number
     return sum
+
+
+def get_masks_bit_count(masks: list[int]) -> dict[int, int]:
+    return {m: m.bit_count() for m in masks}
+
+
+def get_masks_compatibility(masks: list[int]) -> dict[int, list[int]]:
+    return {m2: [m1 for m1 in masks if not (m1 & m2)] for m2 in masks}
