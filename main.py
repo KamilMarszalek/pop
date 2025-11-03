@@ -24,7 +24,7 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 200
+N_ROWS = 500
 LIMITS = Range(-10, 10)
 N_CARDS = 20
 
@@ -45,7 +45,7 @@ def main() -> None:
         population_count=150,
         probability_of_crossover=0.8,
         probability_of_mutation=0.04,
-        fes=200000,
+        fes=2_000_000,
         num_of_cards=N_CARDS,
         board=board,
         num_of_best_survivors=2,
