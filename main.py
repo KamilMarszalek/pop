@@ -42,12 +42,13 @@ def main() -> None:
         reproduction.reproduction,
         crossover.crossover,
         succession.elitism,
-        population_count=100,
+        population_count=150,
         probability_of_crossover=0.8,
-        probability_of_mutation=0.02,
-        fes=100000,
+        probability_of_mutation=0.04,
+        fes=200000,
         num_of_cards=N_CARDS,
         board=board,
+        num_of_best_survivors=2,
     ).run()
     print(result[1])
 
