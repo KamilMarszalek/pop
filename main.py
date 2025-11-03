@@ -24,7 +24,7 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 500
+N_ROWS = 200
 LIMITS = Range(-10, 10)
 N_CARDS = 20
 
@@ -42,12 +42,12 @@ def main() -> None:
         reproduction.reproduction,
         crossover.crossover,
         succession.elitism,
-        5,
-        0.2,
-        0.5,
-        100000,
-        N_CARDS,
-        board,
+        population_count=100,
+        probability_of_crossover=0.8,
+        probability_of_mutation=0.02,
+        fes=100000,
+        num_of_cards=N_CARDS,
+        board=board,
     ).run()
     print(result[1])
 
