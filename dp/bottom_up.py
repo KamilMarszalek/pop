@@ -1,3 +1,4 @@
+from util.types import Board
 from util.util import calculate_row_sum, generate_non_adjacent_masks
 
 type Memoization = dict[int, dict[int, float]]
@@ -7,7 +8,7 @@ def create_memoization(n_rows: int, possible_masks: list[int]) -> Memoization:
     return {i: {mask: float("-inf") for mask in possible_masks} for i in range(n_rows)}
 
 
-def mwis_bottom_up(board: list[list[int]], max_cards: int) -> int:
+def mwis_bottom_up(board: Board, max_cards: int) -> int:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
     memo = create_memoization(len(board), possible_masks)
 

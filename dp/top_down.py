@@ -1,3 +1,4 @@
+from util.types import Board
 from util.util import (
     calculate_row_sum,
     generate_non_adjacent_masks,
@@ -12,7 +13,7 @@ def create_tabulation(masks: list[int]) -> Tabulation:
     return {(m, 0): 0 for m in masks}
 
 
-def mwis_top_down(board: list[list[int]], max_cards: int) -> int:
+def mwis_top_down(board: Board, max_cards: int) -> int:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
     masks_bit_count = get_masks_bit_count(possible_masks)
     compatibility = get_masks_compatibility(possible_masks)
