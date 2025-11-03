@@ -1,5 +1,5 @@
-from type_definitions import Population
-from unit import Unit
+from .type_definitions import Population
+from .unit import Unit
 import heapq
 
 
@@ -11,7 +11,7 @@ def elitism(
     num_of_best_survivors: int = 0,
 ):
     if num_of_best_survivors <= 0:
-        return m_population
+        return m_population, m_evaluation
     best_survivors = heapq.nlargest(
         num_of_best_survivors, old_population, key=lambda x: old_evaluation[x]
     )

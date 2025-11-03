@@ -1,5 +1,5 @@
-from type_definitions import Board, Population
-from unit import Unit
+from .type_definitions import Board, Population
+from .unit import Unit
 
 
 class GeneticAlgorithm:

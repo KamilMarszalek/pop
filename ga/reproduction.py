@@ -1,5 +1,5 @@
-from type_definitions import Population
-from unit import Unit
+from .type_definitions import Population
+from .unit import Unit
 from random import choice
 
 
