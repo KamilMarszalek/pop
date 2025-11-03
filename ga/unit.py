@@ -63,8 +63,9 @@ class Unit:
 
         return child1, child2
 
-    def mutate(self, probability_of_mutation: float) -> None:
+    def mutate(self, probability_of_mutation: float) -> "Unit":
+        new_genes = [x for x in self.genes]
         for i in range(len(self.genes)):
             if uniform(0, 1) < probability_of_mutation:
-                self.genes[i] = choice(self.choices)
-        self.repair()
+                new_genes[i] = choice(self.choices)
+        return Unit(len(self.genes), self.num_of_cards, new_genes)
