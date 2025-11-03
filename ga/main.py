@@ -14,15 +14,6 @@ def q(unit: "Unit", board: Board) -> int:
     return reward
 
 
-def generate_non_adjacent_masks(size: int) -> list[int]:
-    valid_masks: list[int] = []
-    for mask in range(1 << size):
-        if mask & (mask << 1):
-            continue
-        valid_masks.append(mask)
-    return valid_masks
-
-
 def generate_starting_population(
     population_count: int, num_of_columns: int, num_of_cards: int
 ) -> Population:
