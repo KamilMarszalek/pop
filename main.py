@@ -2,15 +2,16 @@ from dataclasses import dataclass
 from random import randint
 
 from dp.top_down import mwis_top_down
-from util.types import Board
 from ga import (
-    genetic_algorithm,
     crossover,
+    genetic_algorithm,
     mutation,
     q,
     reproduction,
     succession,
 )
+from greedy.main import SimulatedAnnealingParams, simulated_annealing
+from util.types import Board
 
 
 @dataclass
@@ -24,9 +25,9 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 500
+N_ROWS = 100
 LIMITS = Range(-10, 10)
-N_CARDS = 20
+N_CARDS = N_COLUMNS * N_ROWS
 
 
 def main() -> None:
@@ -34,7 +35,10 @@ def main() -> None:
     board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
     result = mwis_top_down(board, N_CARDS)
     print(f"Board: {board}")
-    print(f"Total sum: {result}")
+    print(f"Total sum: {result}\n")
+    print("Simulated Annealing")
+    result = simulated_annealing(board, N_CARDS, SimulatedAnnealingParams())
+    print(f"Total sum: {result}\n")
     print("GA")
     result = genetic_algorithm.GeneticAlgorithm(
         q.q,
