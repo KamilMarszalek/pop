@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from random import randint
 
-from dp.top_down import mwis_top_down
-from ga import (
+from dynamic_programming.top_down import mwis_top_down
+from  import (
     crossover,
     genetic_algorithm,
     mutation,
@@ -10,7 +10,7 @@ from ga import (
     reproduction,
     succession,
 )
-from greedy.main import SimulatedAnnealingParams, simulated_annealing
+from .simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from util.types import Board
 
 
