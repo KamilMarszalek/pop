@@ -11,7 +11,7 @@ class BoardState:
         self.n: int = len(board)
         self.m: int = len(board[0])
         self.board: Board = board
-        self.selection_gird: list[list[bool]] = [
+        self.selection_grid: list[list[bool]] = [
             [False for _ in range(self.m)] for _ in range(self.n)
         ]
         self.selected_tiles: set[Tile] = set()
@@ -21,7 +21,7 @@ class BoardState:
             self.board[i][j]
             for j in range(self.m)
             for i in range(self.n)
-            if self.selection_gird[i][j]
+            if self.selection_grid[i][j]
         )
 
     def greedy_fill(self, max_cards: int, h_func: HeuristicFunc = None) -> None:
@@ -29,15 +29,15 @@ class BoardState:
             self.selected_tiles
         ) < max_cards:
             row, column = tile
-            self.selection_gird[row][column] = True
+            self.selection_grid[row][column] = True
             self.selected_tiles.add(tile)
 
     def can_tile_be_selected(self, tile: Tile) -> bool:
         row, column = tile
         neighbors = self._neighbors(tile)
         return (
-            not any(self.selection_gird[i][j] for i, j in neighbors)
-            and not self.selection_gird[row][column]
+            not any(self.selection_grid[i][j] for i, j in neighbors)
+            and not self.selection_grid[row][column]
         )
 
     def _neighbors(self, tile: Tile) -> list[Tile]:
@@ -51,7 +51,7 @@ class BoardState:
         return result
 
     def _find_best_isolated_tile(self, h_func: HeuristicFunc = None) -> Tile | None:
-        scoring = h_func or self._default_scoroing
+        scoring = h_func or self._default_scoring
         best_score, best_tile = 0, None
         for i in range(self.n):
             for j in range(self.m):
@@ -64,6 +64,6 @@ class BoardState:
                     best_tile = tile
         return best_tile
 
-    def _default_scoroing(self, tile: Tile) -> int:
+    def _default_scoring(self, tile: Tile) -> int:
         row, column = tile
         return self.board[row][column] // (1 + len(self._neighbors(tile)))

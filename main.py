@@ -1,16 +1,8 @@
 from dataclasses import dataclass
 from random import randint
 
-from dynamic_programming.top_down import mwis_top_down
-from  import (
-    crossover,
-    genetic_algorithm,
-    mutation,
-    q,
-    reproduction,
-    succession,
-)
-from .simulated_annealing import SimulatedAnnealingParams, simulated_annealing
+from dp.top_down import mwis_top_down
+from sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from util.types import Board
 
 
@@ -27,7 +19,7 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 N_COLUMNS = 4
 N_ROWS = 100
 LIMITS = Range(-10, 10)
-N_CARDS = N_COLUMNS * N_ROWS
+N_CARDS = 20
 
 
 def main() -> None:
@@ -39,22 +31,22 @@ def main() -> None:
     print("Simulated Annealing")
     result = simulated_annealing(board, N_CARDS, SimulatedAnnealingParams())
     print(f"Total sum: {result}\n")
-    print("GA")
-    result = genetic_algorithm.GeneticAlgorithm(
-        q.q,
-        mutation.mutation,
-        reproduction.reproduction,
-        crossover.crossover,
-        succession.elitism,
-        population_count=150,
-        probability_of_crossover=0.8,
-        probability_of_mutation=0.04,
-        fes=2_000_000,
-        num_of_cards=N_CARDS,
-        board=board,
-        num_of_best_survivors=2,
-    ).run()
-    print(result[1])
+    # print("GA")
+    # result = genetic_algorithm.GeneticAlgorithm(
+    #     q.q,
+    #     mutation.mutation,
+    #     reproduction.reproduction,
+    #     crossover.crossover,
+    #     succession.elitism,
+    #     population_count=150,
+    #     probability_of_crossover=0.8,
+    #     probability_of_mutation=0.04,
+    #     fes=2_000_000,
+    #     num_of_cards=N_CARDS,
+    #     board=board,
+    #     num_of_best_survivors=2,
+    # ).run()
+    # print(result[1])
 
 
 if __name__ == "__main__":

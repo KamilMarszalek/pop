@@ -9,9 +9,9 @@ from util.types import Board
 
 @dataclass
 class SimulatedAnnealingParams:
-    n_iter: int = 1_000
-    T0: float = 10.0
-    T0_threshold: float = 1e-3
+    n_iter: int = 10
+    T0: float = 10_000.0
+    T0_threshold: float = 1e-5
     cooling: float = 0.99
 
 
@@ -21,18 +21,23 @@ def simulated_annealing(
     params: SimulatedAnnealingParams,
     neighbor: NeighborSelectionFunc = remove_and_select,
 ) -> int:
-    x = BoardState(board)
-    x.greedy_fill(max_cards)
-    x_eval = x.evaluate_sum()
+    best = BoardState(board)
+    best.greedy_fill(max_cards)
+    best_eval = best.evaluate_sum()
+    current, current_eval = best, best_eval
+    print(f"Initial greedy: {best_eval}")
     t = params.T0
     for _ in range(params.n_iter):
-        y = neighbor(x)
-        y_eval = y.evaluate_sum()
-        if y_eval > x_eval:
-            x, x_eval = y, y_eval
-        elif random.uniform(0, 1) < math.exp(-abs(y_eval - x_eval) / t):
-            x, x_eval = y, y_eval
-        t *= params.cooling
-        if t < params.T0_threshold:
-            break
-    return x_eval
+        candidate = neighbor(current)
+        candidate_eval = candidate.evaluate_sum()
+        print(candidate_eval)
+        if candidate_eval > current_eval or random.uniform(0, 1) < math.exp(
+            -abs(candidate_eval - best_eval) / t
+        ):
+            current, current_eval = candidate, candidate_eval
+            if current_eval > best_eval:
+                best_eval = current_eval
+        # t *= params.cooling
+        # if t < params.T0_threshold:
+        #     break
+    return best_eval
