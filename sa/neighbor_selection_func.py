@@ -4,11 +4,16 @@ from typing import Callable
 
 from sa.board_state import BoardState
 
-type NeighborSelectionFunc = Callable[[BoardState], BoardState]
+type NeighborSelectionFunc = Callable[[BoardState, int], BoardState]
 
 
-def remove_and_select(state: BoardState) -> BoardState:
+def remove_and_select(state: BoardState, max_cards: int) -> BoardState:
     cloned_state = deepcopy(state)
+    if (
+        cloned_state.get_number_of_selected_tiles() < max_cards
+        and cloned_state.select_random_positive_tile() is not None
+    ):
+        return cloned_state
     tile = random.choice(list(cloned_state.selected_tiles))
     row, column = tile
     cloned_state.selected_tiles.remove(tile)
@@ -20,9 +25,9 @@ def remove_and_select(state: BoardState) -> BoardState:
     for i, j in directions:
         new_row, new_column = row + i, column + j
         if 0 <= new_row < cloned_state.n and 0 <= new_column < cloned_state.m:
-            tile = (new_row, new_column)
-            if cloned_state.can_tile_be_selected(tile):
-                cloned_state.selected_tiles.add(tile)
+            new_tile = (new_row, new_column)
+            if cloned_state._can_tile_be_selected(new_tile):
+                cloned_state.selected_tiles.add(new_tile)
                 cloned_state.selection_grid[new_row][new_column] = True
                 return cloned_state
     cloned_state.selected_tiles.add(tile)

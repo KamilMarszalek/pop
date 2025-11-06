@@ -17,15 +17,15 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 100
+N_ROWS = 500
 LIMITS = Range(-10, 10)
-N_CARDS = 20
+N_CARDS = 200
 
 
 def main() -> None:
     print("DP")
     board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
-    result = mwis_top_down(board, N_CARDS)
+    result = mwis_top_down(board, 200)
     print(f"Board: {board}")
     print(f"Total sum: {result}\n")
     print("Simulated Annealing")

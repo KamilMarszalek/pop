@@ -1,3 +1,4 @@
+import random
 from typing import Callable
 
 from util.types import Board
@@ -28,11 +29,31 @@ class BoardState:
         while (tile := self._find_best_isolated_tile(h_func)) and len(
             self.selected_tiles
         ) < max_cards:
-            row, column = tile
-            self.selection_grid[row][column] = True
-            self.selected_tiles.add(tile)
+            self._select_tile(tile)
 
-    def can_tile_be_selected(self, tile: Tile) -> bool:
+    def select_random_positive_tile(self) -> Tile | None:
+        tiles = [(i, j) for j in range(self.m) for i in range(self.n)]
+        random.shuffle(tiles)
+        for tile in tiles:
+            row, column = tile
+            if (
+                not self.selection_grid[row][column]
+                and self.board[row][column] > 0
+                and self._can_tile_be_selected(tile)
+            ):
+                self._select_tile(tile)
+                return tile
+        return None
+
+    def get_number_of_selected_tiles(self) -> int:
+        return len(self.selected_tiles)
+
+    def _select_tile(self, tile: Tile) -> None:
+        row, column = tile
+        self.selection_grid[row][column] = True
+        self.selected_tiles.add(tile)
+
+    def _can_tile_be_selected(self, tile: Tile) -> bool:
         row, column = tile
         neighbors = self._neighbors(tile)
         return (
@@ -56,7 +77,7 @@ class BoardState:
         for i in range(self.n):
             for j in range(self.m):
                 tile = (i, j)
-                if not self.can_tile_be_selected(tile):
+                if not self._can_tile_be_selected(tile):
                     continue
                 score = scoring(tile)
                 if score > best_score:
