@@ -3,7 +3,8 @@ import random
 from dataclasses import dataclass
 
 from sa.board_state import BoardState
-from sa.neighbor_selection_func import NeighborSelectionFunc, remove_and_select
+from sa.heuristic import greedy_fill
+from sa.neighbor_generator import NeighborGenerator
 from util.types import Board
 
 
@@ -19,16 +20,16 @@ def simulated_annealing(
     board: Board,
     max_cards: int,
     params: SimulatedAnnealingParams,
-    neighbor: NeighborSelectionFunc = remove_and_select,
+    generator: NeighborGenerator,
 ) -> int:
     best = BoardState(board)
-    best.greedy_fill(max_cards)
+    greedy_fill(best, max_cards)
     best_eval = best.evaluate_sum()
     current, current_eval = best, best_eval
     print(f"Initial greedy: {best_eval}")
     t = params.T0
     for _ in range(params.n_iter):
-        candidate = neighbor(current, max_cards)
+        candidate = generator(current, max_cards)
         candidate_eval = candidate.evaluate_sum()
         if candidate_eval > current_eval or random.uniform(0, 1) < math.exp(
             -abs(candidate_eval - best_eval) / t

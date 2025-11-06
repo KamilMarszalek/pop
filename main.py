@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from random import randint
 
 from dp.top_down import mwis_top_down
+from sa.neighbor_generator import LocalNeighborGenerator
 from sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from util.types import Board
 
@@ -25,11 +26,12 @@ N_CARDS = 200
 def main() -> None:
     print("DP")
     board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
-    result = mwis_top_down(board, 200)
-    print(f"Board: {board}")
+    result = mwis_top_down(board, N_CARDS)
     print(f"Total sum: {result}\n")
     print("Simulated Annealing")
-    result = simulated_annealing(board, N_CARDS, SimulatedAnnealingParams())
+    result = simulated_annealing(
+        board, N_CARDS, SimulatedAnnealingParams(), LocalNeighborGenerator()
+    )
     print(f"Total sum: {result}\n")
     # print("GA")
     # result = genetic_algorithm.GeneticAlgorithm(
