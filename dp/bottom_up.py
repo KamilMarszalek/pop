@@ -1,31 +1,50 @@
 from util.types import Board
-from util.util import calculate_row_sum, generate_non_adjacent_masks
+from util.util import (
+    calculate_row_sum,
+    generate_non_adjacent_masks,
+    get_masks_bit_count,
+    get_masks_compatibility,
+    merge_compatibility,
+)
 
-type Memoization = dict[int, dict[int, float]]
+type Tabulation = dict[tuple[int, int], int]
 
 
-def create_memoization(n_rows: int, possible_masks: list[int]) -> Memoization:
-    return {i: {mask: float("-inf") for mask in possible_masks} for i in range(n_rows)}
+def create_tabulation(masks: list[int]) -> Tabulation:
+    return {(m, 0): 0 for m in masks}
 
 
-def mwis_bottom_up(board: Board, max_cards: int) -> int:
+def mwis_bottom_up(
+    board: Board,
+    max_cards: int,
+    initial_mask: int = 0,
+    final_mask: int = 0,
+) -> int:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
-    memo = create_memoization(len(board), possible_masks)
+    masks_bit_count = get_masks_bit_count(possible_masks)
+    compatibility = get_masks_compatibility(possible_masks)
+    tab = create_tabulation(possible_masks)
 
-    def dsf(row_index: int, previous_mask: int, cards_used: int) -> float:
-        if row_index == len(board) or cards_used == max_cards:
-            return 0
-        if memo[row_index][previous_mask] == float("-inf"):
-            max_sum = float("-inf")
-            for mask in possible_masks:
-                bits = mask.bit_count()
-                if not (previous_mask & mask) and bits + cards_used <= (max_cards):
-                    max_sum = max(
-                        max_sum,
-                        calculate_row_sum(board[row_index], mask)
-                        + dsf(row_index + 1, mask, cards_used + bits),
-                    )
-            memo[row_index][previous_mask] = max_sum
-        return memo[row_index][previous_mask]
+    for row_index in range(len(board) - 1, -1, -1):
+        next_tab: Tabulation = {}
+        for (previous_mask, cards_used), value in tab.items():
+            comp = compatibility[previous_mask]
+            if row_index == 0:
+                comp = merge_compatibility(
+                    compatibility[previous_mask], compatibility[initial_mask]
+                )
+            elif row_index == len(board) - 1:
+                comp = merge_compatibility(
+                    compatibility[previous_mask], compatibility[final_mask]
+                )
+            for mask in comp:
+                c = cards_used + masks_bit_count[mask]
+                if c > max_cards:
+                    continue
+                key = (mask, c)
+                new_sum = value + calculate_row_sum(board[row_index], mask)
+                if new_sum >= next_tab.get(key, 0):
+                    next_tab[key] = new_sum
+        tab = next_tab
 
-    return int(dsf(0, 0, 0))
+    return max(tab.values())

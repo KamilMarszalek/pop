@@ -21,3 +21,7 @@ def get_masks_bit_count(masks: list[int]) -> dict[int, int]:
 
 def get_masks_compatibility(masks: list[int]) -> dict[int, list[int]]:
     return {m2: [m1 for m1 in masks if not (m1 & m2)] for m2 in masks}
+
+
+def merge_compatibility(m1: list[int], m2: list[int]) -> list[int]:
+    return list(set(m1) & set(m2))
