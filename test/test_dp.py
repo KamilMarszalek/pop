@@ -9,6 +9,7 @@ class TestCase:
     board: list[list[int]]
     max_cards: int
     result: int
+    __test__: bool = False
 
 
 def test_dp_alghoritms():
@@ -42,10 +43,10 @@ def test_dp_alghoritms():
         TestCase(board=[[1, -1, 1, -1], [-1, 1, -1, 1]], max_cards=8, result=4),
         TestCase(board=[[5, 3, 10, -1], [0, -3, 9, -2]], max_cards=8, result=15),
     ]
-    for tc in test_cases:
-        for algo in alghoritms:
-            result = algo(tc.board, tc.max_cards)
-            assert algo(tc.board, tc.max_cards) == tc.result, (
+    for algo in alghoritms:
+        for tc in test_cases:
+            result, _ = algo(tc.board, tc.max_cards)
+            assert result == tc.result, (
                 f"Alghortim {algo.__name__} failed for board={tc.board}",
                 f"max_cards={tc.max_cards}; expected={tc.result} got={result}",
             )
