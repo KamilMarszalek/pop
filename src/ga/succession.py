@@ -1,5 +1,5 @@
-from .type_definitions import Population
-from .unit import Unit
+from src.ga.type_definitions import Population
+from src.ga.unit import Unit
 import heapq
 
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from dp.bottom_up import mwis_bottom_up
-from dp.top_down import mwis_top_down
+from src.dp.bottom_up import mwis_bottom_up
+from src.dp.top_down import mwis_top_down
 
 
 @dataclass

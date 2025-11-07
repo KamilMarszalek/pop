@@ -1,4 +1,4 @@
-from .type_definitions import Population
+from src.ga.type_definitions import Population
 
 
 def mutation(

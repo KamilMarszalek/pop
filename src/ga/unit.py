@@ -1,6 +1,6 @@
 from random import choice, uniform
 from itertools import combinations
-from util.util import generate_non_adjacent_masks
+from src.util.util import generate_non_adjacent_masks
 
 type Genes = list[int]
 

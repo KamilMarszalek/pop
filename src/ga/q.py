@@ -1,5 +1,5 @@
-from .unit import Unit
-from .type_definitions import Board
+from src.ga.unit import Unit
+from src.ga.type_definitions import Board
 
 
 def q(unit: "Unit", board: Board) -> int:
