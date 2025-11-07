@@ -3,6 +3,8 @@ from heapq import heappush, heappop, nlargest
 from src.util.util import generate_non_adjacent_masks
 from src.astar.state import State
 
+MASKS = generate_non_adjacent_masks(4)
+
 
 def h_reward(board: Board, col_index: int, cards_left: int) -> int:
     if cards_left <= 0:
@@ -55,11 +57,10 @@ def generate_children(
     queue: list["State"],
     visited: dict[tuple[int, int, int], int],
 ) -> None:
-    masks = generate_non_adjacent_masks(4)
     if state.col_index >= len(board):
         return None
     col = board[state.col_index]
-    for mask in masks:
+    for mask in MASKS:
         if mask & state.previous_mask:
             continue
         delta_profit = 0
