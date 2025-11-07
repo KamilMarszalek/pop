@@ -1,6 +1,6 @@
 from typing import Callable
 
-from sa.board_state import BoardState, Tile
+from src.sa.board_state import BoardState, Tile
 
 type TileEvaluation = Callable[[BoardState, Tile], int]
 

@@ -2,8 +2,8 @@ import random
 from copy import deepcopy
 from typing import Protocol
 
-from dp.bottom_up import mwis_bottom_up
-from sa.board_state import BoardState, Tile
+from src.dp.bottom_up import mwis_bottom_up
+from src.sa.board_state import BoardState, Tile
 
 type MaskSize = tuple[int, int]
 

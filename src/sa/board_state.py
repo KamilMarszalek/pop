@@ -1,4 +1,4 @@
-from util.types import Board
+from src.util.types import Board
 
 type Tile = tuple[int, int]
 

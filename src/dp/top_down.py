@@ -1,5 +1,5 @@
-from util.types import Board, MWISResult
-from util.util import (
+from src.util.types import Board, MWISResult
+from src.util.util import (
     calculate_row_sum,
     generate_non_adjacent_masks,
     get_masks_bit_count,

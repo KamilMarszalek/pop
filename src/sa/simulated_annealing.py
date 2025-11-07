@@ -2,10 +2,10 @@ import math
 import random
 from dataclasses import dataclass
 
-from sa.board_state import BoardState
-from sa.heuristic import greedy_fill
-from sa.neighbor_generator import NeighborGenerator
-from util.types import Board
+from src.sa.board_state import BoardState
+from src.sa.heuristic import greedy_fill
+from src.sa.neighbor_generator import NeighborGenerator
+from src.util.types import Board
 
 
 @dataclass

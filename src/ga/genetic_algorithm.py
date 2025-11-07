@@ -113,7 +113,7 @@ class GeneticAlgorithm:
             if best_candidate_evaluation > self.best_value:
                 self.best_unit = best_candidate
                 self.best_value = best_candidate_evaluation
-                print(self.best_value)
+                # print(self.best_value)
             self.succession()
             self.t += 1
         return self.best_unit, self.best_value
