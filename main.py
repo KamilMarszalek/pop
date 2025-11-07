@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from random import randint
 
+from dp.bottom_up import mwis_bottom_up
 from dp.top_down import mwis_top_down
-from sa.neighbor_generator import LocalNeighborGenerator
+from sa.neighbor_generator import FixLocalRows
 from sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from util.types import Board
 
@@ -20,19 +21,30 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 N_COLUMNS = 4
 N_ROWS = 500
 LIMITS = Range(-10, 10)
-N_CARDS = 200
+N_CARDS = (N_COLUMNS * N_ROWS) // 2
 
 
 def main() -> None:
-    print("DP")
     board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
-    result = mwis_top_down(board, N_CARDS)
-    print(f"Total sum: {result}\n")
+    print("---------------------")
+    print("DP Top down")
+    result, path = mwis_top_down(board, N_CARDS)
+    print(f"Result: {result}")
+    # for i in path:
+    #     print(f"{i:04b}")
+    print("---------------------")
+    print("DP bottom up")
+    result, path = mwis_bottom_up(board, N_CARDS)
+    print(f"Result: {result}")
+    # for i in path:
+    #     print(f"{i:04b}")
+    print("---------------------")
     print("Simulated Annealing")
     result = simulated_annealing(
-        board, N_CARDS, SimulatedAnnealingParams(), LocalNeighborGenerator()
+        board, N_CARDS, SimulatedAnnealingParams(), FixLocalRows()
     )
     print(f"Total sum: {result}\n")
+
     # print("GA")
     # result = genetic_algorithm.GeneticAlgorithm(
     #     q.q,

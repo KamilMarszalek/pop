@@ -11,9 +11,9 @@ from util.types import Board
 @dataclass
 class SimulatedAnnealingParams:
     n_iter: int = 10_000
-    T0: float = 1000.0
+    T0: float = 10000.0
     T0_threshold: float = 1e-5
-    cooling: float = 0.95
+    cooling: float = 0.99
 
 
 def simulated_annealing(
@@ -28,16 +28,15 @@ def simulated_annealing(
     current, current_eval = best, best_eval
     print(f"Initial greedy: {best_eval}")
     t = params.T0
-    for _ in range(params.n_iter):
+    for i in range(params.n_iter):
         candidate = generator(current, max_cards)
         candidate_eval = candidate.evaluate_sum()
         if candidate_eval > current_eval or random.uniform(0, 1) < math.exp(
-            -abs(candidate_eval - best_eval) / t
+            (candidate_eval - current_eval) / t
         ):
             current, current_eval = candidate, candidate_eval
             if current_eval > best_eval:
-                best_eval = current_eval
-        t *= params.cooling
-        if t < params.T0_threshold:
-            break
+                best, best_eval = candidate, candidate_eval
+        if i % 1000 == 0:
+            print(f"Iteration: {i}, best_score: {best_eval}")
     return best_eval

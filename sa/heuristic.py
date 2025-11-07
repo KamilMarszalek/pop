@@ -26,6 +26,6 @@ def _find_best_isolated_tile(state: BoardState) -> Tile | None:
     return best_tile
 
 
-def _weight_per_neighbors(state: BoardState, tile: Tile) -> int:
+def _weight_per_neighbors(state: BoardState, tile: Tile) -> float:
     row, col = tile
-    return state.board[row][col] // (1 + len(state.neighbors(tile)))
+    return state.board[row][col] / (1 + len(state.neighbors(tile)))

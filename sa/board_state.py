@@ -51,3 +51,10 @@ class BoardState:
 
     def count_selected_tiles(self) -> int:
         return len(self.selected_tiles)
+
+    def get_mask_from_row(self, row_index: int) -> int:
+        mask = 0
+        selection_row = self.selection_grid[row_index]
+        for tile in selection_row:
+            mask = (mask << 1) | int(tile)
+        return mask
