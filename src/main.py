@@ -57,28 +57,28 @@ def main() -> None:
     )
     print(f"Total sum: {result}\n")
 
-    print("---------------------")
-    print("Genetic algorithm")
-    result = genetic_algorithm.GeneticAlgorithm(
-        q.q,
-        mutation.mutation,
-        reproduction.reproduction,
-        crossover.crossover,
-        succession.elitism,
-        population_count=150,
-        probability_of_crossover=0.98,
-        probability_of_mutation=0.01,
-        fes=20000,
-        num_of_cards=N_CARDS,
-        board=board,
-        num_of_best_survivors=2,
-    ).run()
-    print("Result:", result[1])
+    # print("---------------------")
+    # print("Genetic algorithm")
+    # result = genetic_algorithm.GeneticAlgorithm(
+    #     q.q,
+    #     mutation.mutation,
+    #     reproduction.reproduction,
+    #     crossover.crossover,
+    #     succession.elitism,
+    #     population_count=150,
+    #     probability_of_crossover=0.98,
+    #     probability_of_mutation=0.01,
+    #     fes=20000,
+    #     num_of_cards=N_CARDS,
+    #     board=board,
+    #     num_of_best_survivors=2,
+    # ).run()
+    # print("Result:", result[1])
 
-    print("---------------------")
-    print("A*")
-    result = a_star(board, N_CARDS)
-    print("Result:", result)
+    # print("---------------------")
+    # print("A*")
+    # result = a_star(board, N_CARDS)
+    # print("Result:", result)
 
 
 if __name__ == "__main__":
