@@ -1,5 +1,5 @@
 from src.util.types import Board
-from heapq import heappush, heappop, nlargest
+from heapq import heappush, heappop, nlargest, heappushpop
 from src.util.util import generate_non_adjacent_masks
 from src.astar.state import State
 
@@ -13,34 +13,42 @@ class AStar:
         self.current_state = self._get_initial_state()
         self.queue = [self.current_state]
         self.visited = {}
-        self.best_profit = 0
+        self.best_profit = float("-inf")
 
     def _get_initial_state(self) -> "State":
         return State(0, self.h_reward(0, self.num_of_cards), 0, 0, 0)
 
     def _precompute_h_reward(self) -> dict[tuple[int, int], int]:
-        precomputed = {}
-        for col_index in range(len(self.board) + 1):
+        precomputed: dict[tuple[int, int], int] = {}
+        suffix_heap: list[int] = []
+
+        for col_index in reversed(range(len(self.board))):
+
+            for value in self.board[col_index]:
+                if value > 0:
+                    if len(suffix_heap) < self.num_of_cards:
+                        heappush(suffix_heap, value)
+                    elif value > suffix_heap[0]:
+                        heappushpop(suffix_heap, value)
+
             for cards in range(self.num_of_cards + 1):
-                if cards == 0 or col_index == len(self.board):
+                if cards == 0:
                     precomputed[(col_index, cards)] = 0
-                    continue
-                sliced_flat_board = [
-                    cell for row in self.board[col_index:] for cell in row if cell > 0
-                ]
-                biggest_values = nlargest(cards, sliced_flat_board)
-                precomputed[(col_index, cards)] = sum(biggest_values[:cards])
+                else:
+                    biggest_values = nlargest(cards, suffix_heap)
+                    precomputed[(col_index, cards)] = sum(biggest_values)
+
+        for cards in range(self.num_of_cards + 1):
+            precomputed[(len(self.board), cards)] = 0
+
+        for i in range(len(self.board) - 1, -1, -1):
+            for c in range(1, self.num_of_cards + 1):
+                precomputed[(i, c)] = max(precomputed[(i, c)], precomputed[(i + 1, c)])
+
         return precomputed
 
     def h_reward(self, col_index: int, cards_left: int) -> int:
         return self.precomputed_h_rewards[(col_index, cards_left)]
-
-    def should_continue(self) -> bool:
-        return (
-            self.current_state.col_index < len(self.board)
-            and self.current_state.cards_used <= self.num_of_cards
-            and self.queue
-        )
 
     def generate_children(self) -> None:
         if self.current_state.col_index >= len(self.board):
@@ -62,9 +70,12 @@ class AStar:
                 mask,
                 self.current_state.cards_used + cards_used,
             )
-            old = self.visited.get(
-                (new_state.col_index, new_state.previous_mask, new_state.cards_used), -1
-            )
+            if (
+                self.best_profit > float("-inf")
+                and new_state.f_reward() <= self.best_profit
+            ):
+                continue
+            old = self.visited.get(new_state.key(), -1)
             if old >= new_state.g_reward:
                 continue
 
@@ -80,17 +91,14 @@ class AStar:
         return delta_profit, cards_used
 
     def run(self) -> int:
-        while self.should_continue():
+        while self.queue:
             self.current_state = heappop(self.queue)
-            self.visited[
-                (
-                    self.current_state.col_index,
-                    self.current_state.previous_mask,
-                    self.current_state.cards_used,
-                )
-            ] = self.current_state.g_reward
+            if (
+                self.current_state.col_index == len(self.board)
+                or self.current_state.cards_used == self.num_of_cards
+            ):
+                self.best_profit = max(self.best_profit, self.current_state.g_reward)
+                continue
+            self.visited[self.current_state.key()] = self.current_state.g_reward
             self.generate_children()
-
-            if self.current_state.g_reward > self.best_profit:
-                self.best_profit = self.current_state.g_reward
-        return max(self.best_profit, self.current_state.g_reward)
+        return self.best_profit
