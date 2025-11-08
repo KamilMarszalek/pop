@@ -43,5 +43,6 @@ def mwis_bottom_up(
                 if new_sum >= max_sum:
                     next_tab[key] = new_sum, [mask] + path
         tab = next_tab
-
+    if not tab:
+        return 0, []
     return max(tab.values(), key=lambda x: x[0])
