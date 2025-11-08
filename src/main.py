@@ -19,9 +19,9 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 500
-LIMITS = Range(-10_000, 10_000)
-N_CARDS = (N_COLUMNS * N_ROWS) // 2
+N_ROWS = 800
+LIMITS = Range(-10000, 10000)
+N_CARDS = 1000
 
 
 def main() -> None:
@@ -45,28 +45,28 @@ def main() -> None:
     )
     print(f"Total sum: {result}\n")
 
-    # print("---------------------")
-    # print("Genetic algorithm")
-    # result = genetic_algorithm.GeneticAlgorithm(
-    #     q.q,
-    #     mutation.mutation,
-    #     reproduction.reproduction,
-    #     crossover.crossover,
-    #     succession.elitism,
-    #     population_count=150,
-    #     probability_of_crossover=0.98,
-    #     probability_of_mutation=0.01,
-    #     fes=20000,
-    #     num_of_cards=N_CARDS,
-    #     board=board,
-    #     num_of_best_survivors=2,
-    # ).run()
-    # print("Result:", result[1])
+    print("---------------------")
+    print("Genetic algorithm")
+    result = genetic_algorithm.GeneticAlgorithm(
+        q.q,
+        mutation.mutation,
+        reproduction.reproduction,
+        crossover.crossover,
+        succession.elitism,
+        population_count=150,
+        probability_of_crossover=0.99,
+        probability_of_mutation=0.01,
+        fes=2_000_000_000,
+        num_of_cards=N_CARDS,
+        board=board,
+        num_of_best_survivors=2,
+    ).run()
+    print("Result:", result[1])
 
-    # print("---------------------")
-    # print("A*")
-    # result = a_star(board, N_CARDS)
-    # print("Result:", result)
+    print("---------------------")
+    print("A*")
+    result = AStar(board, N_CARDS).run()
+    print("Result:", result)
 
 
 if __name__ == "__main__":
