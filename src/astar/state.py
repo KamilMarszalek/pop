@@ -18,3 +18,6 @@ class State:
 
     def __lt__(self, other: "State") -> bool:
         return self.f_reward() > other.f_reward()
+
+    def key(self) -> tuple[int, int, int]:
+        return (self.col_index, self.previous_mask, self.cards_used)
