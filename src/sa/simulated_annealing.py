@@ -3,15 +3,15 @@ import random
 from dataclasses import dataclass
 
 from src.sa.board_state import BoardState
-from src.sa.heuristic import greedy_fill
+from src.sa.greedy import TileHeuristic, greedy_fill, weight_per_neighbors
 from src.sa.neighbor_generator import NeighborGenerator
 from src.util.types import Board, MWISResult
 
 
 @dataclass
 class SimulatedAnnealingParams:
-    n_iter: int = 10_000
-    T0: float = 10000.0
+    n_iter: int = 2_000
+    T0: float = 10_000.0
     T0_threshold: float = 1e-5
     cooling: float = 0.99
 
@@ -21,9 +21,10 @@ def simulated_annealing(
     max_cards: int,
     params: SimulatedAnnealingParams,
     generator: NeighborGenerator,
+    heuristic: TileHeuristic = weight_per_neighbors,
 ) -> MWISResult:
     best = BoardState(board)
-    greedy_fill(best, max_cards)
+    greedy_fill(best, max_cards, heuristic)
     best_eval = best.evaluate_sum()
     current, current_eval = best, best_eval
     print(f"Initial greedy: {best_eval}")
@@ -37,7 +38,7 @@ def simulated_annealing(
             current, current_eval = candidate, candidate_eval
             if current_eval > best_eval:
                 best, best_eval = candidate, candidate_eval
-        if i % 1000 == 0:
+        if i % 100 == 0:
             print(f"Iteration: {i}, best_score: {best_eval}")
         t *= params.cooling
     return best_eval, best.convert_state_to_masks()

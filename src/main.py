@@ -3,21 +3,9 @@ from random import randint
 
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
-from src.sa.neighbor_generator import FixLocalRows
+from src.sa.neighbor_generator import FixLocalRegions
 from src.sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from src.util.types import Board
-
-from src.ga import (
-    genetic_algorithm,
-    q,
-    mutation,
-    crossover,
-    reproduction,
-    succession,
-)
-
-from src.astar.astar import AStar
-from src.astar.main import a_star
 
 
 @dataclass
@@ -32,12 +20,12 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 N_COLUMNS = 4
 N_ROWS = 500
-LIMITS = Range(-10, 10)
+LIMITS = Range(-10_000, 10_000)
 N_CARDS = (N_COLUMNS * N_ROWS) // 2
 
 
 def main() -> None:
-    board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
+    board = [[10, 9], [9, -10]]
     print("---------------------")
     print("DP Top down")
     result, path = mwis_top_down(board, N_CARDS)
@@ -52,8 +40,8 @@ def main() -> None:
     #     print(f"{i:04b}")
     print("---------------------")
     print("Simulated Annealing")
-    result = simulated_annealing(
-        board, N_CARDS, SimulatedAnnealingParams(), FixLocalRows()
+    result, path = simulated_annealing(
+        board, N_CARDS, SimulatedAnnealingParams(), FixLocalRegions(int(0.05 * N_ROWS))
     )
     print(f"Total sum: {result}\n")
 
