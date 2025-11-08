@@ -1,100 +1,88 @@
 import random
 from copy import deepcopy
-from typing import Protocol
+from dataclasses import dataclass
+from typing import Protocol, final
 
 from src.dp.bottom_up import mwis_bottom_up
 from src.sa.board_state import BoardState, Tile
-
-type MaskSize = tuple[int, int]
 
 
 class NeighborGenerator(Protocol):
     def __call__(self, state: BoardState, max_cards: int) -> BoardState: ...
 
 
-class LocalNeighborGenerator:
-    def __call__(self, state: BoardState, max_cards: int) -> BoardState:
+@dataclass
+class RegionFixContext:
+    state: BoardState
+    first_row: int
+    last_row: int
+    max_cards: int
+
+    @property
+    def region(self) -> list[list[int]]:
+        return self.state.board[self.first_row : self.last_row]
+
+    @property
+    def n_columns(self) -> int:
+        return self.state.m
+
+
+@final
+class FixLocalRegions:
+    def __init__(self, mask_size: int) -> None:
+        self.mask_size = mask_size
+
+    def __call__(
+        self, state: BoardState, max_cards: int, mask_size: int = 4
+    ) -> BoardState:
         cloned = deepcopy(state)
-        if (
-            cloned.count_selected_tiles() < max_cards
-            and (tile := self._find_unselected_positive_tile(cloned)) is not None
-        ):
-            cloned.select_tile(tile)
-            return cloned
-        tile = random.choice(list(cloned.selected_tiles))
-        cloned.unselect_tile(tile)
-        neighbor_tiles = self._generate_neighbor_tiles_in_range(cloned, tile)
-        for n in neighbor_tiles:
-            row, col = n
-            if cloned.can_tile_be_selected(n) and state.board[row][col] > 0:
-                cloned.select_tile(n)
-                return cloned
-        cloned.select_tile(tile)
+        self._fix_region(cloned, max_cards)
         return cloned
 
-    def _find_unselected_positive_tile(self, state: BoardState) -> Tile | None:
-        tiles = [(i, j) for j in range(state.m) for i in range(state.n)]
-        random.shuffle(tiles)
-        for tile in tiles:
-            row, col = tile
-            if (
-                not state.selection_grid[row][col]
-                and state.board[row][col] > 0
-                and state.can_tile_be_selected(tile)
-            ):
-                return tile
-        return None
-
-    def _generate_neighbor_tiles_in_range(
-        self, state: BoardState, tile: Tile, radius: int = 3
-    ) -> list[tuple[int, int]]:
-        directions = [
-            (i, j)
-            for j in range(-radius + 1, radius)
-            for i in range(-radius + 1, radius)
-            if not (i == 0 and j == 0)
-        ]
-        random.shuffle(directions)
-        row, col = tile
-        return [
-            (row + dx, col + dy)
-            for dx, dy in directions
-            if 0 <= row + dx < state.n and 0 <= col + dy < state.m
-        ]
-
-
-class FixLocalRows:
-    def __call__(self, state: BoardState, max_cards: int) -> BoardState:
-        cloned = deepcopy(state)
-        first_row = random.randint(0, cloned.n - 1)
-        self._fix_region(cloned, max_cards, first_row)
-        return cloned
-
-    def _fix_region(
-        self, state: BoardState, max_cards: int, first_row: int, n_rows: int = 4
-    ) -> None:
-        last_row = min(first_row + n_rows, state.n)
-        region = state.board[first_row:last_row]
-        region_selection_grid = state.selection_grid[first_row:last_row]
-        x = sum(1 for t in region_selection_grid if t) - state.count_selected_tiles()
-        for i in range(first_row, last_row):
-            for j in range(state.m):
-                if state.selection_grid[i][j]:
-                    state.unselect_tile((i, j))
-
-        inital_mask = (
-            state.get_mask_from_row(first_row - 1) if first_row - 1 >= 0 else 0
-        )
-        final_mask = state.get_mask_from_row(last_row) if last_row < state.n else 0
+    def _fix_region(self, state: BoardState, max_cards: int) -> None:
+        first_row, last_row = self._get_region_boundaries(state)
+        context = RegionFixContext(state, first_row, last_row, max_cards)
+        initial_mask, final_mask = self._get_boundary_masks(context)
+        selection_delta = self._calculate_selection_delta(context)
+        self._clear_region_selection(context)
         _, fixed_region = mwis_bottom_up(
-            region,
-            max_cards + x,
-            inital_mask,
-            final_mask,
+            context.region, max_cards + selection_delta, initial_mask, final_mask
         )
-        tiles = self._convert_masks_to_tiles(fixed_region, first_row, state.m)
+        self._select_found_tiles(fixed_region, context)
+
+    def _get_region_boundaries(
+        self, state: BoardState, region_size: int = 4
+    ) -> tuple[int, int]:
+        first_row = random.randint(0, state.n - 1)
+        last_row = min(first_row + region_size, state.n)
+        return first_row, last_row
+
+    def _get_boundary_masks(self, context: RegionFixContext) -> tuple[int, int]:
+        initial_mask, final_mask = 0, 0
+        if (row := context.first_row - 1) >= 0:
+            initial_mask = context.state.get_mask_from_row(row)
+        if (row := context.last_row) < context.state.n:
+            final_mask = context.state.get_mask_from_row(row)
+        return initial_mask, final_mask
+
+    def _clear_region_selection(self, context: RegionFixContext) -> None:
+        for i in range(context.first_row, context.last_row):
+            for j in range(context.state.m):
+                if context.state.selection_grid[i][j]:
+                    context.state.unselect_tile((i, j))
+
+    def _calculate_selection_delta(self, context: RegionFixContext) -> int:
+        n_selected_in_region = 0
+        for i in range(context.first_row, context.last_row):
+            for j in range(context.n_columns):
+                if context.state.selection_grid[i][j]:
+                    n_selected_in_region += 1
+        return n_selected_in_region - context.state.count_selected_tiles()
+
+    def _select_found_tiles(self, region: list[int], context: RegionFixContext) -> None:
+        tiles = self._convert_masks_to_tiles(region, context.first_row, context.state.m)
         for tile in tiles:
-            state.select_tile(tile)
+            context.state.select_tile(tile)
 
     def _convert_masks_to_tiles(
         self, masks: list[int], first_row: int, n_columns: int

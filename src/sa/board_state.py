@@ -58,3 +58,6 @@ class BoardState:
         for tile in selection_row:
             mask = (mask << 1) | int(tile)
         return mask
+
+    def convert_state_to_masks(self) -> list[int]:
+        return [self.get_mask_from_row(i) for i in range(self.n)]
