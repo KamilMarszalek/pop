@@ -9,7 +9,7 @@ class AStar:
         self.masks = generate_non_adjacent_masks(4)
         self.board = board
         self.num_of_cards = num_of_cards
-        self.precomputed_h_rewards = self._precompute_h_reward_full_dp'()
+        self.precomputed_h_rewards = self._precompute_h_reward_full_dp()
         self.current_state = self._get_initial_state()
         self.queue = [self.current_state]
         self.visited = {}
