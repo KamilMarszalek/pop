@@ -9,7 +9,7 @@ class AStar:
         self.masks = generate_non_adjacent_masks(4)
         self.board = board
         self.num_of_cards = num_of_cards
-        self.precomputed_h_rewards = self._precompute_h_reward()
+        self.precomputed_h_rewards = self._precompute_h_reward_full_dp'()
         self.current_state = self._get_initial_state()
         self.queue = [self.current_state]
         self.visited = {}
@@ -18,7 +18,7 @@ class AStar:
     def _get_initial_state(self) -> "State":
         return State(0, self.h_reward(0, 0, self.num_of_cards), 0, 0, 0)
 
-    def _precompute_h_reward(self) -> dict[tuple[int, int], int]:
+    def _precompute_h_reward_full_dp(self) -> dict[tuple[int, int], int]:
         mask_values: dict[tuple[int, int], int] = self._precompute_mask_values()
         precomputed: dict[tuple[int, int, int], int] = {}
         for i in range(len(self.board), -1, -1):
