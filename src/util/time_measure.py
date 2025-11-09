@@ -1,21 +1,28 @@
 import time
-from functools import wraps
+import functools
+
+_measurement_active = False
 
 
-def measure_time(store_results=None):
+def measure_time(print_enabled=True):
     def decorator(func):
-        label = None
-        log_func = print
-
-        @wraps(func)
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            name = label or func.__qualname__
+            global _measurement_active
+
+            if _measurement_active:
+                return func(*args, **kwargs)
+
+            _measurement_active = True
             start = time.perf_counter()
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                return result
             finally:
-                duration = time.perf_counter() - start
-                log_func(f"[{name}] took {duration:.6f}s")
+                elapsed = time.perf_counter() - start
+                if print_enabled:
+                    print(f"[{func.__name__}] took {elapsed:.6f}s")
+                _measurement_active = False
 
         return wrapper
 

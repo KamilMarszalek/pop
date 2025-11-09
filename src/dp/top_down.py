@@ -6,6 +6,7 @@ from src.util.util import (
     get_masks_compatibility,
     merge_compatibility,
 )
+from src.util.time_measure import measure_time
 
 type Memoization = dict[int, dict[tuple[int, int], tuple[int, list[int]]]]
 
@@ -14,6 +15,7 @@ def create_memoization(n_rows: int) -> Memoization:
     return {i: {} for i in range(n_rows)}
 
 
+@measure_time()
 def mwis_top_down(
     board: Board,
     max_cards: int,

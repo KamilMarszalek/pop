@@ -6,6 +6,7 @@ from src.sa.board_state import BoardState
 from src.sa.greedy import TileHeuristic, greedy_fill, weight_per_neighbors
 from src.sa.neighbor_generator import NeighborGenerator
 from src.util.types import Board, MWISResult
+from src.util.time_measure import measure_time
 
 
 @dataclass
@@ -16,6 +17,7 @@ class SimulatedAnnealingParams:
     cooling: float = 0.99
 
 
+@measure_time()
 def simulated_annealing(
     board: Board,
     max_cards: int,

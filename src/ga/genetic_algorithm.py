@@ -1,5 +1,6 @@
 from src.ga.type_definitions import Board, Population
 from src.ga.unit import Unit
+from src.util.time_measure import measure_time
 
 
 class GeneticAlgorithm:
@@ -99,6 +100,7 @@ class GeneticAlgorithm:
             self.num_of_best_survivors,
         )
 
+    @measure_time()
     def run(self) -> tuple["Unit", int]:
         while not self._stop():
             self.reproduction()

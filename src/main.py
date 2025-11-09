@@ -6,6 +6,8 @@ from src.dp.top_down import mwis_top_down
 from src.sa.neighbor_generator import FixLocalRegions
 from src.sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
 from src.util.types import Board
+from src.astar.astar import AStar
+from src.ga import genetic_algorithm, reproduction, q, mutation, crossover, succession
 
 
 @dataclass
@@ -19,13 +21,13 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 800
+N_ROWS = 200
 LIMITS = Range(-10000, 10000)
-N_CARDS = 1000
+N_CARDS = 50
 
 
 def main() -> None:
-    board = [[10, 9], [9, -10]]
+    board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
     print("---------------------")
     print("DP Top down")
     result, path = mwis_top_down(board, N_CARDS)
@@ -56,7 +58,7 @@ def main() -> None:
         population_count=150,
         probability_of_crossover=0.99,
         probability_of_mutation=0.01,
-        fes=2_000_000_000,
+        fes=20000,
         num_of_cards=N_CARDS,
         board=board,
         num_of_best_survivors=2,
