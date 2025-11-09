@@ -2,14 +2,16 @@ from src.util.types import Board
 from heapq import heappush, heappop
 from src.util.util import generate_non_adjacent_masks
 from src.astar.state import State
+from src.util.time_measure import measure_time
 
 
+@measure_time()
 class AStar:
     def __init__(self, board: Board, num_of_cards: int) -> None:
         self.masks = generate_non_adjacent_masks(4)
         self.board = board
         self.num_of_cards = num_of_cards
-        self.precomputed_h_rewards = self._precompute_h_reward_lookahead(3)
+        self.precomputed_h_rewards = self._precompute_h_reward_block_dp()
         self.current_state = self._get_initial_state()
         self.queue = [self.current_state]
         self.visited = {}
@@ -113,6 +115,56 @@ class AStar:
                         s += col[row]
                 mask_values[(i, mask)] = s
         return mask_values
+
+    def _precompute_h_reward_block_dp(
+        self, block_size: int = 10
+    ) -> dict[tuple[int, int, int], int]:
+        mask_values = self._precompute_mask_values()
+        global_max_sum = self._compute_global_max_sum()
+        precomputed: dict[tuple[int, int, int], int] = {}
+
+        for prev_mask in self.masks:
+            for cards_left in range(self.num_of_cards + 1):
+                precomputed[(len(self.board), prev_mask, cards_left)] = 0
+
+        for start_col in range(len(self.board) - 1, -1, -block_size):
+            end_col = min(start_col + block_size, len(self.board))
+
+            for i in range(end_col - 1, start_col - 1, -1):
+                for prev_mask in self.masks:
+                    for cards_left in range(self.num_of_cards + 1):
+                        if cards_left == 0:
+                            precomputed[(i, prev_mask, cards_left)] = 0
+                            continue
+
+                        best = 0
+                        for mask in self.masks:
+                            if mask & prev_mask:
+                                continue
+                            used = mask.bit_count()
+                            if used > cards_left:
+                                continue
+                            value = mask_values[(i, mask)] + precomputed.get(
+                                (i + 1, mask, cards_left - used), 0
+                            )
+                            if value > best:
+                                best = value
+                        precomputed[(i, prev_mask, cards_left)] = best
+
+            if start_col > 0:
+                prev_block_start = max(0, start_col - block_size)
+                for i in range(start_col - 1, prev_block_start - 1, -1):
+                    for prev_mask in self.masks:
+                        for cards_left in range(self.num_of_cards + 1):
+                            precomputed[(i, prev_mask, cards_left)] = max(
+                                precomputed.get(
+                                    (i + 1, prev_mask, cards_left),
+                                    0,
+                                ),
+                                global_max_sum[cards_left],
+                            )
+
+        return precomputed
 
     def h_reward(self, col_index: int, mask: int, cards_left: int) -> int:
         return self.precomputed_h_rewards[(col_index, mask, cards_left)]

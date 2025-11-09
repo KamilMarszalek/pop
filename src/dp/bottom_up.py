@@ -6,6 +6,7 @@ from src.util.util import (
     get_masks_compatibility,
     merge_compatibility,
 )
+from src.util.time_measure import measure_time
 
 type Tabulation = dict[tuple[int, int], tuple[int, list[int]]]
 
@@ -14,6 +15,7 @@ def create_tabulation(masks: list[int]) -> Tabulation:
     return {(m, 0): (0, []) for m in masks}
 
 
+@measure_time()
 def mwis_bottom_up(
     board: Board,
     max_cards: int,
