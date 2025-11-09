@@ -20,30 +20,6 @@ class AStar:
     def _get_initial_state(self) -> "State":
         return State(0, self.h_reward(0, 0, self.num_of_cards), 0, 0, 0)
 
-    def _precompute_h_reward_full_dp(self) -> dict[tuple[int, int, int], int]:
-        mask_values: dict[tuple[int, int], int] = self._precompute_mask_values()
-        precomputed: dict[tuple[int, int, int], int] = {}
-        for i in range(len(self.board), -1, -1):
-            for prev_mask in self.masks:
-                for cards_left in range(self.num_of_cards + 1):
-                    if i == len(self.board) or cards_left == 0:
-                        precomputed[(i, prev_mask, cards_left)] = 0
-                    else:
-                        best = 0
-                        for mask in self.masks:
-                            if mask & prev_mask:
-                                continue
-                            used = mask.bit_count()
-                            if used > cards_left:
-                                continue
-                            value = mask_values[(i, mask)] + precomputed.get(
-                                (i + 1, mask, cards_left - used), 0
-                            )
-                            best = max(best, value)
-                        precomputed[(i, prev_mask, cards_left)] = best
-        print(precomputed[(0, 0, self.num_of_cards)])
-        return precomputed
-
     def _compute_global_max_sum(self) -> list[int]:
         flat_positive = [v for col in self.board for v in col if v > 0]
         flat_positive.sort(reverse=True)
@@ -51,59 +27,6 @@ class AStar:
         for k in range(1, self.num_of_cards + 1):
             global_max_sum[k] = sum(flat_positive[:k])
         return global_max_sum
-
-    def _precompute_h_reward_lookahead(
-        self, depth: int = 5
-    ) -> dict[tuple[int, int, int], int]:
-        self.mask_values = self._precompute_mask_values()
-        precomputed = {}
-        self.memo = {}
-        self.global_max_sum = self._compute_global_max_sum()
-        for i in range(len(self.board), -1, -1):
-            for prev_mask in self.masks:
-                for cards_left in range(self.num_of_cards + 1):
-                    if i == len(self.board) or cards_left == 0:
-                        precomputed[(i, prev_mask, cards_left)] = 0
-                        continue
-
-                    precomputed[(i, prev_mask, cards_left)] = self.__dp_local(
-                        i,
-                        prev_mask,
-                        cards_left,
-                        depth,
-                    )
-        return precomputed
-
-    def __dp_local(
-        self,
-        col_idx: int,
-        prev_mask: int,
-        cards_left: int,
-        depth: int,
-    ) -> int:
-        if (col_idx, prev_mask, cards_left) in self.memo:
-            return self.memo[(col_idx, prev_mask, cards_left)]
-        if col_idx == len(self.board) or cards_left == 0 or depth == 0:
-            res = self.global_max_sum[min(cards_left, self.num_of_cards)]
-            self.memo[(col_idx, prev_mask, cards_left)] = res
-            return res
-        local_best = 0
-        for mask in self.masks:
-            if mask & prev_mask:
-                continue
-            used = mask.bit_count()
-            if used > cards_left:
-                continue
-            value = self.mask_values[(col_idx, mask)] + self.__dp_local(
-                col_idx + 1,
-                mask,
-                cards_left - used,
-                depth - 1,
-            )
-            if value > local_best:
-                local_best = value
-        self.memo[(col_idx, prev_mask, cards_left)] = local_best
-        return local_best
 
     def _precompute_mask_values(self) -> dict[tuple[int, int], int]:
         mask_values = {}
@@ -121,50 +44,77 @@ class AStar:
     ) -> dict[tuple[int, int, int], int]:
         mask_values = self._precompute_mask_values()
         global_max_sum = self._compute_global_max_sum()
-        precomputed: dict[tuple[int, int, int], int] = {}
-
-        for prev_mask in self.masks:
-            for cards_left in range(self.num_of_cards + 1):
-                precomputed[(len(self.board), prev_mask, cards_left)] = 0
+        precomputed: dict[tuple[int, int, int], int] = self._init_precomputed()
 
         for start_col in range(len(self.board) - 1, -1, -block_size):
             end_col = min(start_col + block_size, len(self.board))
+            self._compute_block_dp(
+                start_col,
+                end_col,
+                precomputed,
+                mask_values,
+            )
 
-            for i in range(end_col - 1, start_col - 1, -1):
-                for prev_mask in self.masks:
-                    for cards_left in range(self.num_of_cards + 1):
-                        if cards_left == 0:
-                            precomputed[(i, prev_mask, cards_left)] = 0
-                            continue
-
-                        best = 0
-                        for mask in self.masks:
-                            if mask & prev_mask:
-                                continue
-                            used = mask.bit_count()
-                            if used > cards_left:
-                                continue
-                            value = mask_values[(i, mask)] + precomputed.get(
-                                (i + 1, mask, cards_left - used), 0
-                            )
-                            if value > best:
-                                best = value
-                        precomputed[(i, prev_mask, cards_left)] = best
-
-            if start_col > 0:
-                prev_block_start = max(0, start_col - block_size)
-                for i in range(start_col - 1, prev_block_start - 1, -1):
-                    for prev_mask in self.masks:
-                        for cards_left in range(self.num_of_cards + 1):
-                            precomputed[(i, prev_mask, cards_left)] = max(
-                                precomputed.get(
-                                    (i + 1, prev_mask, cards_left),
-                                    0,
-                                ),
-                                global_max_sum[cards_left],
-                            )
+            self._propagate_block_bounds(
+                start_col, block_size, precomputed, global_max_sum
+            )
 
         return precomputed
+
+    def _init_precomputed(self) -> dict[tuple[int, int, int], int]:
+        precomputed: dict[tuple[int, int, int], int] = {}
+        for prev_mask in self.masks:
+            for cards_left in range(self.num_of_cards + 1):
+                precomputed[(len(self.board), prev_mask, cards_left)] = 0
+        return precomputed
+
+    def _compute_block_dp(
+        self,
+        start_col: int,
+        end_col: int,
+        precomputed: dict[tuple[int, int, int], int],
+        mask_values: dict[tuple[int, int], int],
+    ) -> None:
+        for i in range(end_col - 1, start_col - 1, -1):
+            for prev_mask in self.masks:
+                for cards_left in range(self.num_of_cards + 1):
+                    if cards_left == 0:
+                        precomputed[(i, prev_mask, cards_left)] = 0
+                        continue
+
+                    best = 0
+                    for mask in self.masks:
+                        if mask & prev_mask:
+                            continue
+                        used = mask.bit_count()
+                        if used > cards_left:
+                            continue
+                        value = mask_values[(i, mask)] + precomputed.get(
+                            (i + 1, mask, cards_left - used), 0
+                        )
+                        if value > best:
+                            best = value
+                    precomputed[(i, prev_mask, cards_left)] = best
+
+    def _propagate_block_bounds(
+        self,
+        start_col: int,
+        block_size: int,
+        precomputed: dict[tuple[int, int, int], int],
+        global_max_sum: list[int],
+    ):
+        if start_col > 0:
+            prev_block_start = max(0, start_col - block_size)
+            for i in range(start_col - 1, prev_block_start - 1, -1):
+                for prev_mask in self.masks:
+                    for cards_left in range(self.num_of_cards + 1):
+                        precomputed[(i, prev_mask, cards_left)] = max(
+                            precomputed.get(
+                                (i + 1, prev_mask, cards_left),
+                                0,
+                            ),
+                            global_max_sum[cards_left],
+                        )
 
     def h_reward(self, col_index: int, mask: int, cards_left: int) -> int:
         return self.precomputed_h_rewards[(col_index, mask, cards_left)]
