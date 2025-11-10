@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{geometry}
+\usepackage{indentfirst}
 
 \geometry{margin=0.75in}
 \linespread{1.25}
@@ -40,17 +41,17 @@ Jako podproblem definiujemy maksymalizację sumy wartości obecnej kolumny i war
 Dobierając maksymalne lokalne rozwiązanie należy uwzględnić ograniczenie sąsiedztwa (analizujemy dwie kolejne maski, ich iloczyn bitowy musi być równy $0$) oraz ograniczenie liczby kart (łączna liczba użytych kart nie może przekraczać $m$).
 
 Formalnie, niech $DP[i][p][k]$ oznacza maksymalną sumę wartości, jaką można uzyskać
-rozpatrując kolumny od $i$ do końca planszy, przy założeniu, że w poprzedniej kolumnie użyto maski $p$,
-natomiast zostało użyte już $k$ kart. Wówczas:
+rozpatrując kolumny od $i$ do końca planszy, przy założeniu, że w poprzedniej kolumnie użyto maski $p$
+i zostało zużytych już $k$ kart. Wówczas:
 \[
-DP[i][p][k] =
-\begin{cases}
-0, & \text{jeśli } i = n \text{ lub } k = 0, \\[6pt]
-\displaystyle
-\max_{\substack{m \in M \\ m \,\&\, p = 0 \\ |m| \le k}}
-\big( W[i][m] + DP[i+1][m][k + |m|] \big),
-& \text{w przeciwnym razie.}
-\end{cases}
+	DP[i][p][k] =
+	\begin{cases}
+		0, & \text{jeśli } i = n \text{ lub } k = 0, \\[6pt]
+		\displaystyle
+		\max_{\substack{m \in M                      \\ m \,\&\, p \ = \ 0 \\ |m| \le k}}
+		\big( W[i][m] + DP[i+1][m][k + |m|] \big),
+		   & \text{w przeciwnym razie.}
+	\end{cases}
 \]
 Gdzie $M$ oznacza zbiór wszystkich dopuszczalnych masek kolumn (bez sąsiadujących jedynek),
 $|m|$ liczbę kart wybranych w masce $m$, a $W[i][m]$ sumę wartości pól zakrytych przez maskę $m$ w kolumnie $i$.
@@ -67,20 +68,20 @@ Regiony wybierane są losowo, a ich rozmiar i liczba wszystkich lokalnych popra
 
 \section{Algorytm A*}
 
-Algorytm A* łączy podejście programowania dynamicznego z przeszukiwaniem kierowanym heurystyką. 
-Każdy stan opisuje częściowe rozwiązanie (aktualną kolumnę, maskę bitową i liczbę użytych kart), 
+Algorytm A* łączy podejście programowania dynamicznego z przeszukiwaniem kierowanym heurystyką.
+Każdy stan opisuje częściowe rozwiązanie (aktualną kolumnę, maskę bitową i liczbę użytych kart),
 a jego ocena wyrażona jest wzorem:
 \[
-    f(s) = g(s) + h(s),
+	f(s) = g(s) + h(s),
 \]
 gdzie $g(s)$ oznacza uzyskany dotąd zysk, a $h(s)$ szacuje maksymalny możliwy zysk w dalszej części planszy.
 
-Heurystyka $h(s)$ obliczana jest za pomocą \emph{blokowego programowania dynamicznego} — plansza dzielona jest na bloki (np. po 10 kolumn), 
-dla których lokalnie wyznaczane są maksymalne wartości zgodne z ograniczeniami sąsiedztwa i liczby kart. 
-Poza bieżącym blokiem wartości heurystyki są rozszerzane (\emph{propagowane}) o globalną sumę największych dodatnich elementów planszy, 
-co gwarantuje, że $h(s)$ jest dopuszczalna i monotoniczna. 
+Heurystyka $h(s)$ obliczana jest za pomocą \emph{blokowego programowania dynamicznego} — plansza dzielona jest na bloki (np. po 10 kolumn),
+dla których lokalnie wyznaczane są maksymalne wartości zgodne z ograniczeniami sąsiedztwa i liczby kart.
+Poza bieżącym blokiem wartości heurystyki są rozszerzane (\emph{propagowane}) o globalną sumę największych dodatnich elementów planszy,
+co gwarantuje, że $h(s)$ jest dopuszczalna i monotoniczna.
 Dzięki temu A* analizuje znacznie mniej stanów niż pełne DP, zachowując poprawność i optymalność wyniku.
 
 \section{Planowane eksperymenty}
-W eksperymentach porównamy jakość i czas działania zaproponowanych algorytmów na zestawie instancji o różnych rozmiarach planszy i liczbie kart. Pola planszy zostaną zainicjowane wartościamu z różnych przedziałów (np. $[-100, 100]$, $[-1000, 1000]$) aby ocenić wpływ rozkładu wartości na efektywność algorytmów.
+W eksperymentach porównamy jakość i czas działania zaproponowanych algorytmów na zestawie instancji o różnych rozmiarach planszy i liczbie kart. Pola planszy zostaną zainicjowane wartościami z różnych przedziałów (np. $[-100, 100]$, $[-1000, 1000]$), aby ocenić wpływ rozkładu wartości na efektywność algorytmów.
 \end{document}
