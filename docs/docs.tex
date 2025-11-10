@@ -48,18 +48,18 @@ i zostało zużytych już $k$ kart. Wówczas:
 	\begin{cases}
 		0, & \text{jeśli } i = n \text{ lub } k = 0, \\[6pt]
 		\displaystyle
-		\max_{\substack{m \in M                      \\ m \,\&\, p \ = \ 0 \\ |m| \le k}}
-		\big( W[i][m] + DP[i+1][m][k + |m|] \big),
+		\max_{\substack{b \in B                      \\ b \,\&\, p = 0 \\ |b| + k \le m}}
+		\big( W[i][b] + DP[i+1][b][k + |b|] \big),
 		   & \text{w przeciwnym razie.}
 	\end{cases}
 \]
-Gdzie $M$ oznacza zbiór wszystkich dopuszczalnych masek kolumn (bez sąsiadujących jedynek),
-$|m|$ liczbę kart wybranych w masce $m$, a $W[i][m]$ sumę wartości pól zakrytych przez maskę $m$ w kolumnie $i$.
+Gdzie $B$ oznacza zbiór wszystkich dopuszczalnych masek kolumn (bez sąsiadujących jedynek),
+$|b|$ liczbę kart wybranych w masce $b$, a $W[i][b]$ sumę wartości pól zakrytych przez maskę $b$ w kolumnie $i$.
 
-Rozwiązanie końcowe stanowi wartość $DP[0][0][m]$, czyli maksymalny możliwy zysk dla całej planszy.
+Rozwiązanie końcowe stanowi wartość $DP[0][0][0]$, czyli maksymalny możliwy zysk dla całej planszy.
 
 \section{Strategia zachłanna}
-Z planszy wybieramy kolejno komórki, dla których opisująca ją wartość liczbowa $z_{ij}$ jest największa.
+Z plansz wybieramy kolejno komórki, dla których opisująca ją wartość liczbowa $z_{ij}$ jest największa.
 Zaznaczamy je (dołączamy do rozwiązania) i usuwamy ich sasiądów w pionie i poziomie tak długo, aż ograniczenie na liczbę kart $m$ przestanie być spełnione.
 Po znalezieniu wstępnego rozwiązania strategią zachłanną dodatkowo je ulepszamy naprawiając lokalnie regiony o wymiarach $k \times 4$ wykorzystując programowanie dynamiczne.
 Takie podejście pozwoli nam naprawić miejsca, w których suma wartości sąsiadów danego pola jest większa niż ono same (mimo iż pojedynczo ma większą wartość).
