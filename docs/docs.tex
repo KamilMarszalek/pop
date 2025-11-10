@@ -1,5 +1,7 @@
 \documentclass[12pt, a4paper]{article}
 \usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
 \usepackage{geometry}
 
 \geometry{margin=0.75in}
@@ -32,9 +34,28 @@ Podejście to można dodatkowo uprościć wykorzystując wektory mask bitowych \
 każdej kolumnie odpowiada liczba całkowita dodatnia, której reprezentacja binarna odwzorowuje przyjęte wartości.
 
 \section{Programowanie dynamiczne}
-Zagadnienie można rozwiązać wykorzystując programowanie dynamiczne.
+
+Zagadnienie można rozwiązać wykorzystując programowanie dynamiczne.
 Jako podproblem definiujemy maksymalizację sumy wartości obecnej kolumny i wartości zakumulowanej wynikającej z rozwiązania poprzednich podproblemów.
-Dobierając maksymalne lokalne rozwiązanie należy uwzględnić ograniczenie sąsiedztwa (analizujemy dwie kolejne maski, ich iloczyn bitowy musi być równy $0$) i liczby kart (suma użytych kart nie może przekraczać $m$).
+Dobierając maksymalne lokalne rozwiązanie należy uwzględnić ograniczenie sąsiedztwa (analizujemy dwie kolejne maski, ich iloczyn bitowy musi być równy $0$) oraz ograniczenie liczby kart (łączna liczba użytych kart nie może przekraczać $m$).
+
+Formalnie, niech $DP[i][p][k]$ oznacza maksymalną sumę wartości, jaką można uzyskać
+rozpatrując kolumny od $i$ do końca planszy, przy założeniu, że w poprzedniej kolumnie użyto maski $p$,
+a do dyspozycji pozostało $k$ kart. Wówczas:
+\[
+DP[i][p][k] =
+\begin{cases}
+0, & \text{jeśli } i = n \text{ lub } k = 0, \\[6pt]
+\displaystyle
+\max_{\substack{m \in M \\ m \,\&\, p = 0 \\ |m| \le k}}
+\big( W[i][m] + DP[i+1][m][k - |m|] \big),
+& \text{w przeciwnym razie.}
+\end{cases}
+\]
+Gdzie $M$ oznacza zbiór wszystkich dopuszczalnych masek kolumn (bez sąsiadujących jedynek),
+$|m|$ liczbę kart wybranych w masce $m$, a $W[i][m]$ sumę wartości pól zakrytych przez maskę $m$ w kolumnie $i$.
+
+Rozwiązanie końcowe stanowi wartość $DP[0][0][m]$, czyli maksymalny możliwy zysk dla całej planszy.
 
 \section{Strategia zachłanna}
 Z planszy wybieramy kolejno komórki, dla których opisująca ją wartość liczbowa $z_{ij}$ jest największa.
