@@ -50,7 +50,7 @@ class BlockDPHeuristic:
             for mask in self.masks:
                 s = 0
                 for row in range(len(self.board[i])):
-                    if (mask >> row) & 1 and col[row] > 0:
+                    if (mask >> (len(col) - row - 1)) & 1 and col[row] > 0:
                         s += col[row]
                 mask_values[(i, mask)] = s
         return mask_values

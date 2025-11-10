@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class State:
     def __init__(
         self,
@@ -6,12 +9,14 @@ class State:
         col_index: int,
         previous_mask: int,
         cards_used: int,
+        parent: Optional["State"] = None,
     ) -> None:
         self.col_index = col_index
         self.previous_mask = previous_mask
         self.cards_used = cards_used
         self.g_reward = g_reward
         self.h_reward = h_reward
+        self.parent = parent
 
     def f_reward(self) -> int:
         return self.g_reward + self.h_reward

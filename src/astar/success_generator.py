@@ -59,6 +59,7 @@ class SuccessorGenerator:
             state.col_index + 1,
             mask,
             state.cards_used + cards_used,
+            state,
         )
 
     def _is_state_promising(self, new_state: State, current_best: int) -> bool:
@@ -74,7 +75,7 @@ class SuccessorGenerator:
         delta_profit = 0
         cards_used = 0
         for row in range(len(col)):
-            if (mask >> row) & 1:
+            if (mask >> (len(col) - row - 1)) & 1:
                 delta_profit += col[row]
                 cards_used += 1
         return delta_profit, cards_used

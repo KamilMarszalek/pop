@@ -23,9 +23,9 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 1000
+N_ROWS = 10000
 LIMITS = Range(-10000, 10000)
-N_CARDS = 1000
+N_CARDS = 10
 BLOCKSIZE = 10
 
 
@@ -39,7 +39,7 @@ def main() -> None:
     #     print(f"{i:04b}")
     print("---------------------")
     print("DP bottom up")
-    result, path = mwis_bottom_up(board, N_CARDS)
+    result, dp_path = mwis_bottom_up(board, N_CARDS)
     print(f"Result: {result}")
     # for i in path:
     #     print(f"{i:04b}")
@@ -72,7 +72,7 @@ def main() -> None:
     print("A*")
     with measure("AStar"):
         heuristics = BlockDPHeuristic(board, N_CARDS, BLOCKSIZE)
-        result = AStar(board, N_CARDS, heuristics).run()
+        result, a_path = AStar(board, N_CARDS, heuristics).run()
     print("Result:", result)
 
 
