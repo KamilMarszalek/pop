@@ -13,7 +13,7 @@
 }
 \author{
 	Michał Szwejk \\ 331445 \and
-	Kamil Marszałek \\
+	Kamil Marszałek \\ 331401
 }
 \date{}
 \maketitle
@@ -42,6 +42,24 @@ Zaznaczamy je (dołączamy do rozwiązania) i usuwamy ich sasiądów w pionie i 
 Po znalezieniu wstępnego rozwiązania strategią zachłanną dodatkowo je ulepszamy naprawiając lokalnie regiony o wymiarach $k \times 4$ wykorzystując programowanie dynamiczne.
 Takie podejście pozwoli nam naprawić miejsca, w których suma wartości sąsiadów danego pola jest większa niż ono same (mimo iż pojedynczo ma większą wartość).
 Regiony wybierane są losowo, a ich rozmiar i liczba wszystkich lokalnych poprawek są parametrami algorytmu.
-\section{A*}
 
+
+\section{Algorytm A*}
+
+Algorytm A* łączy podejście programowania dynamicznego z przeszukiwaniem kierowanym heurystyką. 
+Każdy stan opisuje częściowe rozwiązanie (aktualną kolumnę, maskę bitową i liczbę użytych kart), 
+a jego ocena wyrażona jest wzorem:
+\[
+    f(s) = g(s) + h(s),
+\]
+gdzie $g(s)$ oznacza uzyskany dotąd zysk, a $h(s)$ szacuje maksymalny możliwy zysk w dalszej części planszy.
+
+Heurystyka $h(s)$ obliczana jest za pomocą \emph{blokowego programowania dynamicznego} — plansza dzielona jest na bloki (np. po 10 kolumn), 
+dla których lokalnie wyznaczane są maksymalne wartości zgodne z ograniczeniami sąsiedztwa i liczby kart. 
+Poza bieżącym blokiem wartości heurystyki są rozszerzane (\emph{propagowane}) o globalną sumę największych dodatnich elementów planszy, 
+co gwarantuje, że $h(s)$ nigdy nie przeszacowuje wartości optymalnej. 
+Dzięki temu A* analizuje znacznie mniej stanów niż pełne DP, zachowując poprawność i optymalność wyniku.
+
+\section{Planowane eksperymenty}
+W eksperymentach porównamy jakość i czas działania zaproponowanych algorytmów na zestawie instancji o różnych rozmiarach planszy i liczbie kart. 
 \end{document}
