@@ -41,14 +41,14 @@ Dobierając maksymalne lokalne rozwiązanie należy uwzględnić ograniczenie s�
 
 Formalnie, niech $DP[i][p][k]$ oznacza maksymalną sumę wartości, jaką można uzyskać
 rozpatrując kolumny od $i$ do końca planszy, przy założeniu, że w poprzedniej kolumnie użyto maski $p$,
-a do dyspozycji pozostało $k$ kart. Wówczas:
+natomiast zostało użyte już $k$ kart. Wówczas:
 \[
 DP[i][p][k] =
 \begin{cases}
 0, & \text{jeśli } i = n \text{ lub } k = 0, \\[6pt]
 \displaystyle
 \max_{\substack{m \in M \\ m \,\&\, p = 0 \\ |m| \le k}}
-\big( W[i][m] + DP[i+1][m][k - |m|] \big),
+\big( W[i][m] + DP[i+1][m][k + |m|] \big),
 & \text{w przeciwnym razie.}
 \end{cases}
 \]
@@ -82,5 +82,5 @@ co gwarantuje, że $h(s)$ jest dopuszczalna i monotoniczna.
 Dzięki temu A* analizuje znacznie mniej stanów niż pełne DP, zachowując poprawność i optymalność wyniku.
 
 \section{Planowane eksperymenty}
-W eksperymentach porównamy jakość i czas działania zaproponowanych algorytmów na zestawie instancji o różnych rozmiarach planszy i liczbie kart. 
+W eksperymentach porównamy jakość i czas działania zaproponowanych algorytmów na zestawie instancji o różnych rozmiarach planszy i liczbie kart. Pola planszy zostaną zainicjowane wartościamu z różnych przedziałów (np. $[-100, 100]$, $[-1000, 1000]$) aby ocenić wpływ rozkładu wartości na efektywność algorytmów.
 \end{document}
