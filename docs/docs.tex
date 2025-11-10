@@ -1,0 +1,47 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+
+\geometry{margin=0.75in}
+\linespread{1.25}
+
+\begin{document}
+
+\title{%
+	[POP] Dokumentacja wstępna projektu \\
+	\Large Zadanie 13 \textendash{} karty na prostokątnej planszy o wymiarach $4 \times n$.
+}
+\author{
+	Michał Szwejk \\ 331445 \and
+	Kamil Marszałek \\
+}
+\date{}
+\maketitle
+
+\section{Polecenie}
+W każdej komórce planszy prostokątnej o rozmiarze $4 \times n$ wpisano liczbę całkowitą $z_{ij}$.
+Masz do dyspozycji $m$ kart, które musisz rozmieścić na planszy.
+Poprawny rozkład kart zakłada, że żadna para kart nie może zajmować komórek sąsiadujących w pionie lub poziomie.
+Twoim zadaniem jest znalezienie takiego rozkładu kart na planszy, aby suma liczb zapisanych w komórkach planszy była jak największa.
+Nie musisz wykorzystywać wszystkich kart.
+
+\section{Reprezentacja rozwiązania}
+Rozwiązanie jest reprezentowane jako macierz zmiennych binarnych $x_{ij} \in \{0, 1\}$,
+gdzie $i$ i $j$ odpowiadają wierszowi i kolumnie na planszy.
+Podejście to można dodatkowo uprościć wykorzystując wektory mask bitowych \textendash{}
+każdej kolumnie odpowiada liczba całkowita dodatnia, której reprezentacja binarna odwzorowuje przyjęte wartości.
+
+\section{Programowanie dynamiczne}
+Zagadnienie można rozwiązać wykorzystując programowanie dynamiczne.
+Jako podproblem definiujemy maksymalizację sumy wartości obecnej kolumny i wartości zakumulowanej wynikającej z rozwiązania poprzednich podproblemów.
+Dobierając maksymalne lokalne rozwiązanie należy uwzględnić ograniczenie sąsiedztwa (analizujemy dwie kolejne maski, ich iloczyn bitowy musi być równy $0$) i liczby kart (suma użytych kart nie może przekraczać $m$).
+
+\section{Strategia zachłanna}
+Z planszy wybieramy kolejno komórki, dla których opisująca ją wartość liczbowa $z_{ij}$ jest największa.
+Zaznaczamy je (dołączamy do rozwiązania) i usuwamy ich sasiądów w pionie i poziomie tak długo, aż ograniczenie na liczbę kart $m$ przestanie być spełnione.
+Po znalezieniu wstępnego rozwiązania strategią zachłanną dodatkowo je ulepszamy naprawiając lokalnie regiony o wymiarach $k \times 4$ wykorzystując programowanie dynamiczne.
+Takie podejście pozwoli nam naprawić miejsca, w których suma wartości sąsiadów danego pola jest większa niż ono same (mimo iż pojedynczo ma większą wartość).
+Regiony wybierane są losowo, a ich rozmiar i liczba wszystkich lokalnych poprawek są parametrami algorytmu.
+\section{A*}
+
+\end{document}
