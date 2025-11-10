@@ -23,7 +23,8 @@ def greedy_and_repair(
     if params is None:
         params = GreedyLocalRepairParams()
     if generator is None:
-        generator = FixLocalRegions(int(params.region_percent_size * len(board)))
+        region_size = max(int(params.region_percent_size * len(board)), 2)
+        generator = FixLocalRegions(region_size)
     state = BoardState(board)
     greedy_fill(state, max_cards, weight)
     eval = state.evaluate_sum()
