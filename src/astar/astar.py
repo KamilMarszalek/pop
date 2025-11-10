@@ -123,34 +123,57 @@ class AStar:
         if self.current_state.col_index >= len(self.board):
             return None
         col = self.board[self.current_state.col_index]
-        for mask in self.masks:
-            if mask & self.current_state.previous_mask:
-                continue
+        for mask in self._get_valid_masks_for_current_state():
             delta_profit, cards_used = self._count_delta_profit(col, mask)
             if cards_used + self.current_state.cards_used > self.num_of_cards:
                 continue
-            new_state = State(
-                self.current_state.g_reward + delta_profit,
-                self.h_reward(
-                    self.current_state.col_index + 1,
-                    mask,
-                    self.num_of_cards - self.current_state.cards_used - cards_used,
-                ),
+            new_state = self._build_successor_state(
+                mask,
+                delta_profit,
+                cards_used,
+            )
+            if not self._is_state_promising(new_state):
+                continue
+            self._enqueue_state(new_state)
+
+    def _get_valid_masks_for_current_state(self) -> list[int]:
+        return [
+            mask for mask in self.masks if not (mask & self.current_state.previous_mask)
+        ]
+
+    def _build_successor_state(
+        self,
+        mask: int,
+        delta_profit: int,
+        cards_used: int,
+    ) -> "State":
+        return State(
+            self.current_state.g_reward + delta_profit,
+            self.h_reward(
                 self.current_state.col_index + 1,
                 mask,
-                self.current_state.cards_used + cards_used,
-                self.current_state,
-            )
-            if (
-                self.best_profit > float("-inf")
-                and new_state.f_reward() <= self.best_profit
-            ):
-                continue
-            old = self.visited.get(new_state.key(), -1)
-            if old >= new_state.g_reward:
-                continue
+                self.num_of_cards - self.current_state.cards_used - cards_used,
+            ),
+            self.current_state.col_index + 1,
+            mask,
+            self.current_state.cards_used + cards_used,
+            self.current_state,
+        )
 
-            heappush(self.queue, new_state)
+    def _is_state_promising(
+        self,
+        new_state: State,
+    ) -> bool:
+        if (
+            self.best_profit > float("-inf")
+            and new_state.f_reward() <= self.best_profit
+        ):
+            return False
+        old = self.visited.get(new_state.key(), -1)
+        return new_state.g_reward > old
+
+    def _enqueue_state(self, state: "State") -> None:
+        heappush(self.queue, state)
 
     def _count_delta_profit(self, col: list[int], mask: int) -> tuple[int, int]:
         delta_profit = 0
@@ -170,6 +193,8 @@ class AStar:
             s = s.parent
 
         path.reverse()
+        while len(path) < len(self.board):
+            path.append(0)
         return path
 
     def run(self) -> tuple[int, list[int]]:
