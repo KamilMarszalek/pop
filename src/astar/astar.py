@@ -34,7 +34,7 @@ class AStar:
             for mask in self.masks:
                 s = 0
                 for row in range(4):
-                    if (mask >> row) & 1 and col[row] > 0:
+                    if (mask >> (len(col) - row - 1)) & 1 and col[row] > 0:
                         s += col[row]
                 mask_values[(i, mask)] = s
         return mask_values
@@ -139,6 +139,7 @@ class AStar:
                 self.current_state.col_index + 1,
                 mask,
                 self.current_state.cards_used + cards_used,
+                self.current_state,
             )
             if (
                 self.best_profit > float("-inf")
@@ -155,20 +156,35 @@ class AStar:
         delta_profit = 0
         cards_used = 0
         for row in range(4):
-            if (mask >> row) & 1:
+            if (mask >> (len(col) - row - 1)) & 1:
                 delta_profit += col[row]
                 cards_used += 1
         return delta_profit, cards_used
 
-    def run(self) -> int:
+    def _reconstruct_path(self, best_state: "State") -> list[int]:
+        path: list[int] = []
+        s = best_state
+
+        while s is not None and s.col_index > 0:
+            path.append(s.previous_mask)
+            s = s.parent
+
+        path.reverse()
+        return path
+
+    def run(self) -> tuple[int, list[int]]:
+        best_state = None
         while self.queue:
             self.current_state = heappop(self.queue)
             if (
                 self.current_state.col_index == len(self.board)
                 or self.current_state.cards_used == self.num_of_cards
             ):
-                self.best_profit = max(self.best_profit, self.current_state.g_reward)
+                if self.current_state.g_reward > self.best_profit:
+                    self.best_profit = self.current_state.g_reward
+                    best_state = self.current_state
                 continue
             self.visited[self.current_state.key()] = self.current_state.g_reward
             self.generate_children()
-        return self.best_profit
+        path = self._reconstruct_path(best_state)
+        return self.best_profit, path
