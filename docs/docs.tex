@@ -78,7 +78,7 @@ gdzie $g(s)$ oznacza uzyskany dotąd zysk, a $h(s)$ szacuje maksymalny możliwy 
 Heurystyka $h(s)$ obliczana jest za pomocą \emph{blokowego programowania dynamicznego} — plansza dzielona jest na bloki (np. po 10 kolumn), 
 dla których lokalnie wyznaczane są maksymalne wartości zgodne z ograniczeniami sąsiedztwa i liczby kart. 
 Poza bieżącym blokiem wartości heurystyki są rozszerzane (\emph{propagowane}) o globalną sumę największych dodatnich elementów planszy, 
-co gwarantuje, że $h(s)$ nigdy nie przeszacowuje wartości optymalnej. 
+co gwarantuje, że $h(s)$ jest dopuszczalna i monotoniczna. 
 Dzięki temu A* analizuje znacznie mniej stanów niż pełne DP, zachowując poprawność i optymalność wyniku.
 
 \section{Planowane eksperymenty}
