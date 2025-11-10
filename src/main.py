@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 from random import randint
 
+from src.astar.astar import AStar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
-from src.sa.neighbor_generator import FixLocalRegions
-from src.sa.simulated_annealing import SimulatedAnnealingParams, simulated_annealing
+from src.sa.greedy_and_repair import greedy_and_repair
 from src.util.types import Board
-from src.astar.astar import AStar
-from src.ga import genetic_algorithm, reproduction, q, mutation, crossover, succession
 
 
 @dataclass
@@ -21,9 +19,9 @@ def generate_board(rows: int, columns: int, r: Range) -> Board:
 
 
 N_COLUMNS = 4
-N_ROWS = 200
+N_ROWS = 400
 LIMITS = Range(-10000, 10000)
-N_CARDS = 50
+N_CARDS = (N_ROWS * N_COLUMNS) // 2
 
 
 def main() -> None:
@@ -41,29 +39,27 @@ def main() -> None:
     # for i in path:
     #     print(f"{i:04b}")
     print("---------------------")
-    print("Simulated Annealing")
-    result, path = simulated_annealing(
-        board, N_CARDS, SimulatedAnnealingParams(), FixLocalRegions(int(0.05 * N_ROWS))
-    )
+    print("Greedy with local repair")
+    result, path = greedy_and_repair(board, N_CARDS)
     print(f"Total sum: {result}\n")
 
-    print("---------------------")
-    print("Genetic algorithm")
-    result = genetic_algorithm.GeneticAlgorithm(
-        q.q,
-        mutation.mutation,
-        reproduction.reproduction,
-        crossover.crossover,
-        succession.elitism,
-        population_count=150,
-        probability_of_crossover=0.99,
-        probability_of_mutation=0.01,
-        fes=20000,
-        num_of_cards=N_CARDS,
-        board=board,
-        num_of_best_survivors=2,
-    ).run()
-    print("Result:", result[1])
+    # print("---------------------")
+    # print("Genetic algorithm")
+    # result = genetic_algorithm.GeneticAlgorithm(
+    #     q.q,
+    #     mutation.mutation,
+    #     reproduction.reproduction,
+    #     crossover.crossover,
+    #     succession.elitism,
+    #     population_count=150,
+    #     probability_of_crossover=0.99,
+    #     probability_of_mutation=0.01,
+    #     fes=20000,
+    #     num_of_cards=N_CARDS,
+    #     board=board,
+    #     num_of_best_survivors=2,
+    # ).run()
+    # print("Result:", result[1])
 
     print("---------------------")
     print("A*")

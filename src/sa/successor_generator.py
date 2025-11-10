@@ -7,7 +7,7 @@ from src.dp.bottom_up import mwis_bottom_up
 from src.sa.board_state import BoardState, Tile
 
 
-class NeighborGenerator(Protocol):
+class SuccessorGenerator(Protocol):
     def __call__(self, state: BoardState, max_cards: int) -> BoardState: ...
 
 
@@ -29,12 +29,10 @@ class RegionFixContext:
 
 @final
 class FixLocalRegions:
-    def __init__(self, mask_size: int) -> None:
-        self.mask_size = mask_size
+    def __init__(self, region_size: int) -> None:
+        self.region_size = region_size
 
-    def __call__(
-        self, state: BoardState, max_cards: int, mask_size: int = 4
-    ) -> BoardState:
+    def __call__(self, state: BoardState, max_cards: int) -> BoardState:
         cloned = deepcopy(state)
         self._fix_region(cloned, max_cards)
         return cloned
@@ -50,11 +48,9 @@ class FixLocalRegions:
         )
         self._select_found_tiles(fixed_region, context)
 
-    def _get_region_boundaries(
-        self, state: BoardState, region_size: int = 4
-    ) -> tuple[int, int]:
+    def _get_region_boundaries(self, state: BoardState) -> tuple[int, int]:
         first_row = random.randint(0, state.n - 1)
-        last_row = min(first_row + region_size, state.n)
+        last_row = min(first_row + self.region_size, state.n)
         return first_row, last_row
 
     def _get_boundary_masks(self, context: RegionFixContext) -> tuple[int, int]:
