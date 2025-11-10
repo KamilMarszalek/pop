@@ -101,7 +101,7 @@ class GeneticAlgorithm:
         )
 
     @measure_time()
-    def run(self) -> tuple["Unit", int]:
+    def run(self) -> tuple[int, list[int]]:
         while not self._stop():
             self.reproduction()
             self.crossover()
@@ -118,4 +118,4 @@ class GeneticAlgorithm:
                 # print(self.best_value)
             self.succession()
             self.t += 1
-        return self.best_unit, self.best_value
+        return self.best_value, self.best_unit.genes
