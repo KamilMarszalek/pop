@@ -34,7 +34,7 @@ def main() -> None:
     #     print(f"{i:04b}")
     print("---------------------")
     print("DP bottom up")
-    result, path = mwis_bottom_up(board, N_CARDS)
+    result, dp_path = mwis_bottom_up(board, N_CARDS)
     print(f"Result: {result}")
     # for i in path:
     #     print(f"{i:04b}")
@@ -60,11 +60,30 @@ def main() -> None:
     #     num_of_best_survivors=2,
     # ).run()
     # print("Result:", result[1])
+    # print("---------------------")
+    # print("Genetic algorithm")
+    # result = genetic_algorithm.GeneticAlgorithm(
+    #     q.q,
+    #     mutation.mutation,
+    #     reproduction.reproduction,
+    #     crossover.crossover,
+    #     succession.elitism,
+    #     population_count=150,
+    #     probability_of_crossover=0.99,
+    #     probability_of_mutation=0.01,
+    #     fes=20000,
+    #     num_of_cards=N_CARDS,
+    #     board=board,
+    #     num_of_best_survivors=2,
+    # ).run()
+    # print("Result:", result[1])
 
     print("---------------------")
     print("A*")
-    result = AStar(board, N_CARDS).run()
+    result, a_path = AStar(board, N_CARDS).run()
     print("Result:", result)
+    for a, dp in zip(a_path, dp_path):
+        assert a == dp
 
 
 if __name__ == "__main__":
