@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
+from src.util.types import Board
+from src.astar.astar import AStar
+
+
+def run_astar(board: Board, max_cards: int) -> int:
+    astar = AStar(board, max_cards)
+    return astar.run()
 
 
 @dataclass
@@ -12,8 +19,8 @@ class TestCase:
     __test__: bool = False
 
 
-def test_dp_alghoritms():
-    alghoritms = [mwis_bottom_up, mwis_top_down]
+def test_algorithms():
+    algorithms = [mwis_bottom_up, mwis_top_down, run_astar]
     test_cases = [
         # No values
         TestCase(board=[[]], max_cards=0, result=0),
@@ -43,7 +50,7 @@ def test_dp_alghoritms():
         TestCase(board=[[1, -1, 1, -1], [-1, 1, -1, 1]], max_cards=8, result=4),
         TestCase(board=[[5, 3, 10, -1], [0, -3, 9, -2]], max_cards=8, result=15),
     ]
-    for algo in alghoritms:
+    for algo in algorithms:
         for tc in test_cases:
             result, _ = algo(tc.board, tc.max_cards)
             assert result == tc.result, (
