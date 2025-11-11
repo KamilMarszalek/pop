@@ -8,8 +8,9 @@ from src.util.time_measure import measure_time
 @measure_time()
 class AStar:
     def __init__(self, board: Board, num_of_cards: int) -> None:
-        self.masks = generate_non_adjacent_masks(4)
         self.board = board
+        self.num_of_rows = len(board[0]) if board else 0
+        self.masks = generate_non_adjacent_masks(self.num_of_rows)
         self.num_of_cards = num_of_cards
         self.precomputed_h_rewards = self._precompute_h_reward_block_dp()
         self.current_state = self._get_initial_state()
@@ -33,7 +34,7 @@ class AStar:
         for i, col in enumerate(self.board):
             for mask in self.masks:
                 s = 0
-                for row in range(4):
+                for row in range(self.num_of_rows):
                     if (mask >> (len(col) - row - 1)) & 1 and col[row] > 0:
                         s += col[row]
                 mask_values[(i, mask)] = s
@@ -178,7 +179,7 @@ class AStar:
     def _count_delta_profit(self, col: list[int], mask: int) -> tuple[int, int]:
         delta_profit = 0
         cards_used = 0
-        for row in range(4):
+        for row in range(self.num_of_rows):
             if (mask >> (len(col) - row - 1)) & 1:
                 delta_profit += col[row]
                 cards_used += 1
