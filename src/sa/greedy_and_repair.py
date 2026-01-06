@@ -28,7 +28,6 @@ def greedy_and_repair(
     state = BoardState(board)
     greedy_fill(state, max_cards, weight)
     eval = state.evaluate_sum()
-    print(f"Initial greedy: {eval}")
     for _ in range(params.n_iter):
         state = generator(state, max_cards)
         eval = state.evaluate_sum()

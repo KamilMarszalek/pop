@@ -1,15 +1,17 @@
+from random import choice
+from typing import Callable
+
 from src.ga.type_definitions import Population
 from src.ga.unit import Unit
-from random import choice
+
+type ReproducitionFunc = Callable[[Population, dict["Unit", int], int], Population]
 
 
 def reproduction(
-    population: Population,
-    evaluations: dict["Unit", int],
-    population_count: int,
+    population: Population, evaluations: dict["Unit", int], population_count: int
 ) -> Population:
     """tournament"""
-    new_population = []
+    new_population: Population = []
     for _ in range(population_count):
         unit1 = choice(population)
         unit2 = choice(population)

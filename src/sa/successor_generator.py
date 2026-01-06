@@ -1,7 +1,7 @@
 import random
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Protocol, final
+from typing import Protocol
 
 from src.dp.bottom_up import mwis_bottom_up
 from src.sa.board_state import BoardState, Tile
@@ -27,7 +27,6 @@ class RegionFixContext:
         return self.state.m
 
 
-@final
 class FixLocalRegions:
     def __init__(self, region_size: int) -> None:
         self.region_size = region_size

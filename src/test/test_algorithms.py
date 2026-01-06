@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
+from src.astar.astar import AStar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
-from src.util.types import Board
-from src.astar.astar import AStar
+from src.util.types import Board, MWISResult
 
 
-def run_astar(board: Board, max_cards: int) -> int:
+def run_astar(board: Board, max_cards: int) -> MWISResult:
     astar = AStar(board, max_cards)
     return astar.run()
 

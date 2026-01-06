@@ -1,3 +1,4 @@
+from src.util.time_measure import measure_time
 from src.util.types import Board, MWISResult
 from src.util.util import (
     calculate_row_sum,
@@ -6,7 +7,6 @@ from src.util.util import (
     get_masks_compatibility,
     merge_compatibility,
 )
-from src.util.time_measure import measure_time
 
 type Memoization = dict[int, dict[tuple[int, int], tuple[int, list[int]]]]
 
@@ -17,19 +17,14 @@ def create_memoization(n_rows: int) -> Memoization:
 
 @measure_time()
 def mwis_top_down(
-    board: Board,
-    max_cards: int,
-    initial_mask: int = 0,
-    final_mask: int = 0,
+    board: Board, max_cards: int, initial_mask: int = 0, final_mask: int = 0
 ) -> MWISResult:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
     compatibility = get_masks_compatibility(possible_masks)
     masks_bit_count = get_masks_bit_count(possible_masks)
     memo = create_memoization(len(board))
 
-    def dsf(
-        row_index: int, cards_used: int, previous_mask: int
-    ) -> tuple[int, list[int]]:
+    def dsf(row_index: int, cards_used: int, previous_mask: int) -> tuple[int, list[int]]:
         if row_index == len(board) or cards_used >= max_cards:
             return 0, []
         key = (previous_mask, cards_used)
@@ -37,9 +32,7 @@ def mwis_top_down(
             max_sum, best_path = 0, []
             comp = compatibility[previous_mask]
             if row_index == len(board) - 1:
-                comp = merge_compatibility(
-                    compatibility[previous_mask], compatibility[final_mask]
-                )
+                comp = merge_compatibility(compatibility[previous_mask], compatibility[final_mask])
             for mask in comp:
                 c = cards_used + masks_bit_count[mask]
                 if c <= max_cards:

@@ -1,11 +1,13 @@
-from src.util.types import Board
-from heapq import heappush, heappop
-from src.util.util import generate_non_adjacent_masks
+from heapq import heappop, heappush
+
 from src.astar.state import State
-from src.util.time_measure import measure_time
+from src.util.types import Board, MWISResult
+from src.util.util import generate_non_adjacent_masks
+
+type EvaluatedValues = dict[tuple[int, int, int], int]
+type MaskValues = dict[tuple[int, int], int]
 
 
-@measure_time()
 class AStar:
     def __init__(self, board: Board, num_of_cards: int) -> None:
         self.board = board
@@ -15,8 +17,8 @@ class AStar:
         self.precomputed_h_rewards = self._precompute_h_reward_block_dp()
         self.current_state = self._get_initial_state()
         self.queue = [self.current_state]
-        self.visited = {}
         self.best_profit = float("-inf")
+        self.visited: EvaluatedValues = {}
 
     def _get_initial_state(self) -> "State":
         return State(0, self.h_reward(0, 0, self.num_of_cards), 0, 0, 0)
@@ -29,8 +31,8 @@ class AStar:
             global_max_sum[k] = sum(flat_positive[:k])
         return global_max_sum
 
-    def _precompute_mask_values(self) -> dict[tuple[int, int], int]:
-        mask_values = {}
+    def _precompute_mask_values(self) -> MaskValues:
+        mask_values: MaskValues = {}
         for i, col in enumerate(self.board):
             for mask in self.masks:
                 s = 0
@@ -40,41 +42,28 @@ class AStar:
                 mask_values[(i, mask)] = s
         return mask_values
 
-    def _precompute_h_reward_block_dp(
-        self, block_size: int = 10
-    ) -> dict[tuple[int, int, int], int]:
+    def _precompute_h_reward_block_dp(self, block_size: int = 10) -> EvaluatedValues:
         mask_values = self._precompute_mask_values()
         global_max_sum = self._compute_global_max_sum()
-        precomputed: dict[tuple[int, int, int], int] = self._init_precomputed()
+        precomputed: EvaluatedValues = self._init_precomputed()
 
         for start_col in range(len(self.board) - 1, -1, -block_size):
             end_col = min(start_col + block_size, len(self.board))
-            self._compute_block_dp(
-                start_col,
-                end_col,
-                precomputed,
-                mask_values,
-            )
+            self._compute_block_dp(start_col, end_col, precomputed, mask_values)
 
-            self._propagate_block_bounds(
-                start_col, block_size, precomputed, global_max_sum
-            )
+            self._propagate_block_bounds(start_col, block_size, global_max_sum, precomputed)
 
         return precomputed
 
-    def _init_precomputed(self) -> dict[tuple[int, int, int], int]:
-        precomputed: dict[tuple[int, int, int], int] = {}
+    def _init_precomputed(self) -> EvaluatedValues:
+        precomputed: EvaluatedValues = {}
         for prev_mask in self.masks:
             for cards_left in range(self.num_of_cards + 1):
                 precomputed[(len(self.board), prev_mask, cards_left)] = 0
         return precomputed
 
     def _compute_block_dp(
-        self,
-        start_col: int,
-        end_col: int,
-        precomputed: dict[tuple[int, int, int], int],
-        mask_values: dict[tuple[int, int], int],
+        self, start_col: int, end_col: int, precomputed: EvaluatedValues, mask_values: MaskValues
     ) -> None:
         for i in range(end_col - 1, start_col - 1, -1):
             for prev_mask in self.masks:
@@ -101,8 +90,8 @@ class AStar:
         self,
         start_col: int,
         block_size: int,
-        precomputed: dict[tuple[int, int, int], int],
         global_max_sum: list[int],
+        precomputed: EvaluatedValues,
     ):
         if start_col > 0:
             prev_block_start = max(0, start_col - block_size)
@@ -110,10 +99,7 @@ class AStar:
                 for prev_mask in self.masks:
                     for cards_left in range(self.num_of_cards + 1):
                         precomputed[(i, prev_mask, cards_left)] = max(
-                            precomputed.get(
-                                (i + 1, prev_mask, cards_left),
-                                0,
-                            ),
+                            precomputed.get((i + 1, prev_mask, cards_left), 0),
                             global_max_sum[cards_left],
                         )
 
@@ -128,26 +114,15 @@ class AStar:
             delta_profit, cards_used = self._count_delta_profit(col, mask)
             if cards_used + self.current_state.cards_used > self.num_of_cards:
                 continue
-            new_state = self._build_successor_state(
-                mask,
-                delta_profit,
-                cards_used,
-            )
+            new_state = self._build_successor_state(mask, delta_profit, cards_used)
             if not self._is_state_promising(new_state):
                 continue
             self._enqueue_state(new_state)
 
     def _get_valid_masks_for_current_state(self) -> list[int]:
-        return [
-            mask for mask in self.masks if not (mask & self.current_state.previous_mask)
-        ]
+        return [mask for mask in self.masks if not (mask & self.current_state.previous_mask)]
 
-    def _build_successor_state(
-        self,
-        mask: int,
-        delta_profit: int,
-        cards_used: int,
-    ) -> "State":
+    def _build_successor_state(self, mask: int, delta_profit: int, cards_used: int) -> "State":
         return State(
             self.current_state.g_reward + delta_profit,
             self.h_reward(
@@ -161,14 +136,8 @@ class AStar:
             self.current_state,
         )
 
-    def _is_state_promising(
-        self,
-        new_state: State,
-    ) -> bool:
-        if (
-            self.best_profit > float("-inf")
-            and new_state.f_reward() <= self.best_profit
-        ):
+    def _is_state_promising(self, new_state: State) -> bool:
+        if self.best_profit > float("-inf") and new_state.f_reward() <= self.best_profit:
             return False
         old = self.visited.get(new_state.key(), -1)
         return new_state.g_reward > old
@@ -198,7 +167,7 @@ class AStar:
             path.append(0)
         return path
 
-    def run(self) -> tuple[int, list[int]]:
+    def run(self) -> MWISResult:
         best_state = None
         while self.queue:
             self.current_state = heappop(self.queue)
@@ -212,5 +181,6 @@ class AStar:
                 continue
             self.visited[self.current_state.key()] = self.current_state.g_reward
             self.generate_children()
+        assert best_state is not None
         path = self._reconstruct_path(best_state)
-        return self.best_profit, path
+        return int(self.best_profit), path

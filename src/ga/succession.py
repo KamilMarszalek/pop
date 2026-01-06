@@ -1,15 +1,22 @@
+import heapq
+from typing import Callable
+
 from src.ga.type_definitions import Population
 from src.ga.unit import Unit
-import heapq
+
+type SuccesionFuc = Callable[
+    [Population, dict[Unit, int], Population, dict[Unit, int], int],
+    tuple[Population, dict[Unit, int]],
+]
 
 
 def elitism(
     m_population: Population,
-    m_evaluation: dict["Unit", int],
-    old_population: Population = None,
-    old_evaluation: dict["Unit", int] = None,
-    num_of_best_survivors: int = 0,
-):
+    m_evaluation: dict[Unit, int],
+    old_population: Population,
+    old_evaluation: dict[Unit, int],
+    num_of_best_survivors: int,
+) -> tuple[Population, dict[Unit, int]]:
     if num_of_best_survivors <= 0:
         return m_population, m_evaluation
     best_survivors = heapq.nlargest(
@@ -17,7 +24,7 @@ def elitism(
     )
     m_population.sort(key=lambda x: m_evaluation[x])
     new_population = m_population[num_of_best_survivors:] + best_survivors
-    new_evaluation = {}
+    new_evaluation: dict["Unit", int] = {}
     for unit in new_population:
         if unit in m_evaluation:
             new_evaluation[unit] = m_evaluation[unit]

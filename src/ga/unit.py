@@ -1,23 +1,15 @@
-from random import choice, uniform
 from itertools import combinations
+from random import choice, uniform
+
 from src.util.util import generate_non_adjacent_masks
 
 type Genes = list[int]
 
 
 class Unit:
-    def __init__(
-        self,
-        num_of_columns: int,
-        num_of_cards: int,
-        genes: Genes = None,
-    ) -> None:
+    def __init__(self, num_of_columns: int, num_of_cards: int, genes: Genes | None = None) -> None:
         self.choices = generate_non_adjacent_masks(4)
-        self.genes = (
-            [choice(self.choices) for _ in range(num_of_columns)]
-            if not genes
-            else genes
-        )
+        self.genes = [choice(self.choices) for _ in range(num_of_columns)] if not genes else genes
         self.num_of_cards = num_of_cards
         self.repair()
 
@@ -47,17 +39,13 @@ class Unit:
 
         points = choice(list(combinations(range(1, num_genes), k)))
 
-        def build_child(a, b, points):
+        def build_child(a: list[int], b: list[int], points: tuple[int, ...]) -> "Unit":
             if len(points) == 1:
                 p = points[0]
                 return Unit(num_genes, self.num_of_cards, a[:p] + b[p:])
             else:
                 p1, p2 = points
-                return Unit(
-                    num_genes,
-                    self.num_of_cards,
-                    a[:p1] + b[p1:p2] + a[p2:],
-                )
+                return Unit(num_genes, self.num_of_cards, a[:p1] + b[p1:p2] + a[p2:])
 
         child1 = build_child(self.genes, other.genes, points)
         child2 = build_child(other.genes, self.genes, points)
