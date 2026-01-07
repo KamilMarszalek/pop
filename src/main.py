@@ -1,84 +1,98 @@
+import random
 from dataclasses import dataclass
-from random import randint
+from itertools import product
+from pathlib import Path
+from typing import Any
 
-from src.astar.astar import AStar
+import pandas as pd
+
+from src.astar.astar import run_astar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
-from src.ga import (
-    genetic_algorithm,
-    crossover,
-    mutation,
-    succession,
-    q,
-    reproduction,
-)
-from src.sa.greedy_and_repair import greedy_and_repair
-from src.util.types import Board
+from src.settings import MAX_CARDS_PERCENT_LIST, N_COLUMNS, N_ROWS_LIST, SEED, VALUE_RANGES_LIST
+from src.util.types import Board, MWISSolver
 
 
 @dataclass
-class Range:
+class BoardData:
+    board: Board
     low: int
     high: int
+    n_rows: int
+    n_columns: int
 
 
-def generate_board(rows: int, columns: int, r: Range) -> Board:
-    return [[randint(r.low, r.high) for _ in range(columns)] for _ in range(rows)]
+def _generate_boards(
+    n_rows_list: list[int], limits_list: list[tuple[int, int]], rng: random.Random
+) -> list[BoardData]:
+    def get_board(rows: int, columns: int, low: int, high: int) -> Board:
+        return [[rng.randint(low, high) for _ in range(columns)] for _ in range(rows)]
+
+    result: list[BoardData] = []
+    for n_rows in n_rows_list:
+        for limits in limits_list:
+            low, high = limits
+            board = get_board(n_rows, N_COLUMNS, low, high)
+            result.append(BoardData(board, low, high, n_rows, N_COLUMNS))
+
+    return result
 
 
-N_COLUMNS = 4
-N_ROWS = 10
-LIMITS = Range(-10000, 10000)
-N_CARDS = 5
+@dataclass
+class SolverRun:
+    name: str
+    solver: MWISSolver
+    params: dict[str, list[Any]] | None
+
+
+def _build_param_grid(param_list: dict[str, list[Any]] | None) -> list[dict[str, Any]]:
+    if param_list is None:
+        return [{}]
+    keys = list(param_list.keys())
+    values = list(param_list.values())
+    grid = [dict(zip(keys, combination)) for combination in product(*values)]
+    return grid
+
+
+def run_experiment(
+    boards: list[BoardData], max_cards_percent_list: list[float], run: SolverRun
+) -> None:
+    solver_results: list[dict[str, Any]] = []
+    for board in boards:
+        for max_cards_percent in max_cards_percent_list:
+            max_cards = int((board.n_rows * board.n_columns) * max_cards_percent)
+            param_grid = _build_param_grid(run.params)
+            for param in param_grid:
+                result, elapsed = run.solver(board.board, max_cards, **param)
+                value, _ = result
+                result_row: dict[str, Any] = {
+                    "n_rows": board.n_rows,
+                    "limit_min": board.low,
+                    "limit_max": board.high,
+                    "max_cards": max_cards,
+                    "value": value,
+                    "elapsed": elapsed,
+                }
+                result_row.update(param)
+                solver_results.append(result_row)
+
+    save_dir = Path("results")
+    save_dir.mkdir(exist_ok=True, parents=True)
+
+    pd.DataFrame(solver_results).to_csv(save_dir / f"{run.name}.csv")
 
 
 def main() -> None:
-    board = generate_board(N_ROWS, N_COLUMNS, LIMITS)
-    print("---------------------")
-    print("DP Top down")
-    result, path = mwis_top_down(board, N_CARDS)
-    print(f"Result: {result}")
-    for i in path:
-        print(f"{i:04b}")
+    dp_top_down = SolverRun(name="dynamic-top-down", solver=mwis_top_down, params=None)
+    dp_bottom_up = SolverRun(name="dynamic-bottom-up", solver=mwis_bottom_up, params=None)
+    astar = SolverRun(name="astar", solver=run_astar, params=None)
+    runs = [dp_top_down, dp_bottom_up, astar]
 
-    print("---------------------")
-    print("DP bottom up")
-    result, path = mwis_bottom_up(board, N_CARDS)
-    print(f"Result: {result}")
-    for i in path:
-        print(f"{i:04b}")
+    rng = random.Random(SEED)
+    boards = _generate_boards(N_ROWS_LIST, VALUE_RANGES_LIST, rng)
 
-    print("---------------------")
-    print("Greedy with local repair")
-    result, path = greedy_and_repair(board, N_CARDS)
-    print(f"Total sum: {result}\n")
-
-    print("---------------------")
-    print("Genetic algorithm")
-    result, path = genetic_algorithm.GeneticAlgorithm(
-        q.q,
-        mutation.mutation,
-        reproduction.reproduction,
-        crossover.crossover,
-        succession.elitism,
-        population_count=150,
-        probability_of_crossover=0.99,
-        probability_of_mutation=0.01,
-        fes=20000,
-        num_of_cards=N_CARDS,
-        board=board,
-        num_of_best_survivors=2,
-    ).run()
-    print("Result:", result)
-    for i in path:
-        print(f"{i:04b}")
-
-    print("---------------------")
-    print("A*")
-    result, path = AStar(board, N_CARDS).run()
-    print("Result:", result)
-    for i in path:
-        print(f"{i:04b}")
+    for run in runs:
+        run_experiment(boards, MAX_CARDS_PERCENT_LIST, run)
 
 
 if __name__ == "__main__":

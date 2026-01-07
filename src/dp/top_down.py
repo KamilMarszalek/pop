@@ -17,7 +17,7 @@ def create_memoization(n_rows: int) -> Memoization:
 
 @measure_time()
 def mwis_top_down(
-    board: Board, max_cards: int, initial_mask: int = 0, final_mask: int = 0
+    board: Board, max_cards: int, *, initial_mask: int = 0, final_mask: int = 0
 ) -> MWISResult:
     possible_masks = generate_non_adjacent_masks(len(board[0]))
     compatibility = get_masks_compatibility(possible_masks)

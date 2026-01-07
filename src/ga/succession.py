@@ -4,7 +4,7 @@ from typing import Callable
 from src.ga.type_definitions import Population
 from src.ga.unit import Unit
 
-type SuccesionFuc = Callable[
+type SuccesionFunc = Callable[
     [Population, dict[Unit, int], Population, dict[Unit, int], int],
     tuple[Population, dict[Unit, int]],
 ]

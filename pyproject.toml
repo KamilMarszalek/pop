@@ -5,6 +5,7 @@ description = "Search and optimization project"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pandas>=2.3.3",
     "pytest>=8.4.2",
 ]
 
@@ -21,3 +22,8 @@ indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
 skip-magic-trailing-comma = true
+
+[dependency-groups]
+dev = [
+    "pandas-stubs>=2.3.3.251219",
+]

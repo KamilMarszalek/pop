@@ -1,5 +1,9 @@
-from src.ga.unit import Unit
+from typing import Callable
+
 from src.ga.type_definitions import Board
+from src.ga.unit import Unit
+
+type QFunc = Callable[["Unit", Board], int]
 
 
 def q(unit: "Unit", board: Board) -> int:

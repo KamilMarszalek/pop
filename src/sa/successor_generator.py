@@ -1,14 +1,9 @@
 import random
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Protocol
 
 from src.dp.bottom_up import mwis_bottom_up
 from src.sa.board_state import BoardState, Tile
-
-
-class SuccessorGenerator(Protocol):
-    def __call__(self, state: BoardState, max_cards: int) -> BoardState: ...
 
 
 @dataclass
@@ -28,8 +23,9 @@ class RegionFixContext:
 
 
 class FixLocalRegions:
-    def __init__(self, region_size: int) -> None:
+    def __init__(self, region_size: int, rng: random.Random) -> None:
         self.region_size = region_size
+        self.rng = rng
 
     def __call__(self, state: BoardState, max_cards: int) -> BoardState:
         cloned = deepcopy(state)
@@ -48,7 +44,7 @@ class FixLocalRegions:
         self._select_found_tiles(fixed_region, context)
 
     def _get_region_boundaries(self, state: BoardState) -> tuple[int, int]:
-        first_row = random.randint(0, state.n - 1)
+        first_row = self.rng.randint(0, state.n - 1)
         last_row = min(first_row + self.region_size, state.n)
         return first_row, last_row
 

@@ -1,6 +1,7 @@
 from heapq import heappop, heappush
 
 from src.astar.state import State
+from src.util.time_measure import measure_time
 from src.util.types import Board, MWISResult
 from src.util.util import generate_non_adjacent_masks
 
@@ -184,3 +185,9 @@ class AStar:
         assert best_state is not None
         path = self._reconstruct_path(best_state)
         return int(self.best_profit), path
+
+
+@measure_time()
+def run_astar(board: Board, max_cards: int) -> MWISResult:
+    astar = AStar(board, max_cards)
+    return astar.run()
