@@ -38,9 +38,10 @@ class FixLocalRegions:
         initial_mask, final_mask = self._get_boundary_masks(context)
         selection_delta = self._calculate_selection_delta(context)
         self._clear_region_selection(context)
-        _, fixed_region = mwis_bottom_up(
+        result, _ = mwis_bottom_up(
             context.region, max_cards + selection_delta, initial_mask, final_mask
         )
+        _, fixed_region = result
         self._select_found_tiles(fixed_region, context)
 
     def _get_region_boundaries(self, state: BoardState) -> tuple[int, int]:
