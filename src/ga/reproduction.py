@@ -4,11 +4,11 @@ from typing import Callable
 from src.ga.type_definitions import Population
 from src.ga.unit import Unit
 
-type ReproducitionFunc = Callable[[Population, dict["Unit", int], int], Population]
+type ReproducitionFunc = Callable[[Population, dict[Unit, int], int], Population]
 
 
 def reproduction(
-    population: Population, evaluations: dict["Unit", int], population_count: int
+    population: Population, evaluations: dict[Unit, int], population_count: int
 ) -> Population:
     """tournament"""
     new_population: Population = []

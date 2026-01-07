@@ -24,7 +24,7 @@ def elitism(
     )
     m_population.sort(key=lambda x: m_evaluation[x])
     new_population = m_population[num_of_best_survivors:] + best_survivors
-    new_evaluation: dict["Unit", int] = {}
+    new_evaluation: dict[Unit, int] = {}
     for unit in new_population:
         if unit in m_evaluation:
             new_evaluation[unit] = m_evaluation[unit]

@@ -3,10 +3,10 @@ from typing import Callable
 from src.ga.type_definitions import Board
 from src.ga.unit import Unit
 
-type QFunc = Callable[["Unit", Board], int]
+type QFunc = Callable[[Unit, Board], int]
 
 
-def q(unit: "Unit", board: Board) -> int:
+def q(unit: Unit, board: Board) -> int:
     reward = 0
     for mask, col_board in zip(unit.genes, board):
         for row in range(4):
