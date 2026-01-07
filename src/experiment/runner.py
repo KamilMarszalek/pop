@@ -13,6 +13,7 @@ from src.util.types import Board, MWISSolver
 
 @dataclass
 class BoardConfig:
+    index: int
     n_rows: int
     n_columns: int
     low: int
@@ -73,12 +74,12 @@ class ExperimentRunner:
         self.output_path = config.output_path
 
     def run_parallel(self) -> None:
-        boards = [b_cfg.generate(self.rng) for b_cfg in self.board_configs]
         tasks: list[tuple[AlgorithmConfig, BoardInstance, int, dict[str, Any]]] = []
 
-        for algo in self.algo_configs:
-            for board in boards:
-                for max_cards_percent in self.max_card_percents:
+        for b in self.board_configs:
+            board = b.generate(self.rng)
+            for max_cards_percent in self.max_card_percents:
+                for algo in self.algo_configs:
                     max_cards = max(
                         1, int(board.config.n_rows * board.config.n_columns * max_cards_percent)
                     )
@@ -103,6 +104,7 @@ class ExperimentRunner:
     ) -> dict[str, Any]:
         base: dict[str, Any] = {
             "algo": algo.name,
+            "board_idx": board.config.index,
             "n_rows": board.config.n_rows,
             "n_columns": board.config.n_columns,
             "limit_low": board.config.low,

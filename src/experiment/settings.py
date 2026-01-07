@@ -18,11 +18,18 @@ _SETTINGS: dict[str, Any] = {
 
 
 def _default_board_configs() -> list[BoardConfig]:
-    return [
-        BoardConfig(n_rows, _SETTINGS["test_board_width"], low, high)
-        for n_rows in _SETTINGS["test_board_heights"]
-        for low, high in _SETTINGS["test_value_ranges"]
-    ]
+    results: list[BoardConfig] = []
+    for i, (low, high) in enumerate(_SETTINGS["test_value_ranges"]):
+        for j, n_rows in enumerate(_SETTINGS["test_board_heights"]):
+            config = BoardConfig(
+                i * len(_SETTINGS["test_board_heights"]) + j,
+                n_rows,
+                _SETTINGS["test_board_width"],
+                low,
+                high,
+            )
+            results.append(config)
+    return results
 
 
 def _default_algorithm_configs() -> list[AlgorithmConfig]:
