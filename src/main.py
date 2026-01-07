@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
@@ -91,8 +92,10 @@ def main() -> None:
     rng = random.Random(SEED)
     boards = _generate_boards(N_ROWS_LIST, VALUE_RANGES_LIST, rng)
 
-    for run in runs:
-        run_experiment(boards, MAX_CARDS_PERCENT_LIST, run)
+    with ProcessPoolExecutor() as executor:
+        executor.map(
+            run_experiment, [boards] * len(runs), [MAX_CARDS_PERCENT_LIST] * len(runs), runs
+        )
 
 
 if __name__ == "__main__":
