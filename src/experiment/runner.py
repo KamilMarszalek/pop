@@ -4,12 +4,15 @@ from concurrent.futures import Future, ProcessPoolExecutor
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 import numpy as np
 import pandas as pd
 
 from src.util.types import Board, MWISSolver
+
+type SingleExperimentTask = tuple[AlgorithmConfig, BoardInstance, float, dict[str, Any]]
+type SingleExperimentResult = tuple[dict[str, Any], dict[str, Any] | None]
 
 
 @dataclass
@@ -67,7 +70,7 @@ class RunnerConfig:
     seed: int
     n_repetitions: int
     n_workers: int | None = None
-    output_path: Path = Path("results")
+    output_path: Path = Path("output")
 
 
 class ExperimentRunner:
@@ -80,11 +83,17 @@ class ExperimentRunner:
         self.n_repetitions = config.n_repetitions
         self.n_workers = config.n_workers
 
-        config.output_path.mkdir(exist_ok=True, parents=True)
-        self.output_path = config.output_path
+        self.results_path = config.output_path / "results"
+        self.results_path.mkdir(parents=True, exist_ok=True)
+
+        self.logs_path = config.output_path / "logs"
+        self.logs_path.mkdir(parents=True, exist_ok=True)
+
+        self.board_config_path = config.output_path / "board_configs"
+        self.board_config_path.mkdir(parents=True, exist_ok=True)
 
     def run_parallel(self) -> None:
-        tasks: list[tuple[AlgorithmConfig, BoardInstance, float, dict[str, Any]]] = []
+        tasks: list[SingleExperimentTask] = []
 
         for i, b in enumerate(self.board_configs):
             self._save_board_config(i, b)
@@ -98,7 +107,7 @@ class ExperimentRunner:
                             tasks.append((algo, board, max_cards_percent, param))
 
         with ProcessPoolExecutor(max_workers=self.n_workers) as executor:
-            futures: list[Future[dict[str, Any]]] = []
+            futures: list[Future[SingleExperimentResult]] = []
             for algo, board, max_cards, params in tasks:
                 if not algo.is_deterministic:
                     algo_rng = random.Random(self.rng.randint(0, 2**32 - 1))
@@ -108,7 +117,11 @@ class ExperimentRunner:
                 )
             results = [f.result() for f in futures]
 
-        self._save_results(results)
+        results_to_save = [r for r, _ in results]
+        logs_to_save = [log for _, log in results if log is not None]
+
+        self._save_results(results_to_save)
+        self._save_logs(logs_to_save)
 
     def _run_single_experiment(
         self,
@@ -116,7 +129,7 @@ class ExperimentRunner:
         board: BoardInstance,
         max_cards_percent: float,
         params: dict[str, Any],
-    ) -> dict[str, Any]:
+    ) -> SingleExperimentResult:
         base: dict[str, Any] = {
             "algo": algo.name,
             "board_id": board.id,
@@ -126,20 +139,28 @@ class ExperimentRunner:
         max_cards = max(1, int(board.size * max_cards_percent))
         if algo.is_deterministic:
             result, elapsed = algo.solver(board.board, max_cards, **params)
+            assert len(result) == 2
             value, _ = result
             res: dict[str, Any] = {"value": value, "time": elapsed}
             base.update(params)
             base.update(res)
-            return base
+            return base, None
 
         else:
             times: list[float] = []
             values: list[int] = []
+            logs: list[list[float]] = []
+            iterations = None
+
             for _ in range(self.n_repetitions):
                 result, elapsed = algo.solver(board.board, max_cards, **params)
-                value, _ = result
+                assert len(result) == 3
+                value, _, log = result
+                iterations, log_value = log
                 times.append(elapsed)
                 values.append(value)
+                logs.append(log_value)
+
             results: dict[str, Any] = {
                 "num_trials": self.n_repetitions,
                 "value_mean": np.mean(values),
@@ -149,17 +170,34 @@ class ExperimentRunner:
                 "time_mean": np.mean(times),
                 "time_std": np.std(times),
             }
+
+            assert iterations
+            log_array = np.array(logs)
+            log_info: dict[str, Any] = {
+                "algo": algo.name,
+                "iter": iterations,
+                "eval_mean": np.mean(log_array, axis=0),
+                "eval_std": np.std(log_array, axis=0),
+            }
+
             params.pop("rng")
             base.update(params)
             base.update(results)
-            return base
+            return base, log_info
 
     def _save_results(self, results: list[dict[str, Any]]) -> None:
         df = pd.DataFrame(results)
         for algo in self.algo_configs:
             partial = df[df["algo"] == algo.name]
-            partial = partial.dropna(axis=1, how="all")
-            partial.to_csv(self.output_path / f"{algo.name}.csv", index=False)
+            partial = partial.dropna(axis=1, how="all").reset_index()
+            partial.to_csv(self.results_path / f"{algo.name}.csv", index=True)
+
+    def _save_logs(self, logs: list[dict[str, Any]]) -> None:
+        for i, log in enumerate(logs):
+            name = cast(str, log["algo"])
+            df = pd.DataFrame(log)
+            df = df.drop(columns=["algo"])
+            df.to_csv(self.logs_path / f"{name}-{i}.csv", index=False)
 
     def _save_board_config(self, id: int, config: BoardConfig) -> None:
         config_dict: dict[str, Any] = {
@@ -170,7 +208,7 @@ class ExperimentRunner:
             "limit_high": config.high,
         }
 
-        with open(self.output_path / "board_configs.csv", "a+") as csvfile:
+        with open(self.board_config_path / "board_configs.csv", "a+") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=config_dict.keys())
             if csvfile.tell() == 0:
                 writer.writeheader()

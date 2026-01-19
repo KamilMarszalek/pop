@@ -21,7 +21,9 @@ def greedy_and_repair(
     state = BoardState(board)
     greedy_fill(state, max_cards, weight)
     eval = state.evaluate_sum()
+    evals: list[float] = [eval]
     for _ in range(n_iter):
         state = generator(state, max_cards)
         eval = state.evaluate_sum()
-    return eval, state.convert_state_to_masks()
+        evals.append(eval)
+    return eval, state.convert_state_to_masks(), ([i for i in range(n_iter + 1)], evals)

@@ -1,7 +1,10 @@
 from typing import Any, Protocol
 
 type Board = list[list[int]]
-type MWISResult = tuple[int, list[int]]
+type Log = tuple[list[int], list[float]]
+
+type MWISBase = tuple[int, list[int]]
+type MWISResult = MWISBase | tuple[*MWISBase, Log]
 
 
 class MWISSolver(Protocol):
