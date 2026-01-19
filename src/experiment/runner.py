@@ -1,3 +1,4 @@
+import csv
 import random
 from concurrent.futures import Future, ProcessPoolExecutor
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ from src.util.types import Board, MWISSolver
 
 @dataclass
 class BoardConfig:
+    config_id: int
     n_rows: int
     n_columns: int
     low: int
@@ -82,18 +84,18 @@ class ExperimentRunner:
         self.output_path = config.output_path
 
     def run_parallel(self) -> None:
-        tasks: list[tuple[AlgorithmConfig, BoardInstance, int, dict[str, Any]]] = []
+        tasks: list[tuple[AlgorithmConfig, BoardInstance, float, dict[str, Any]]] = []
 
         for i, b in enumerate(self.board_configs):
+            self._save_board_config(i, b)
             for bi in range(self.boards_per_config):
                 board_seed = self.rng.randint(0, 32**2 - 1)
                 board = b.generate(i * self.boards_per_config + bi, board_seed)
                 for max_cards_percent in self.max_card_percents:
                     for algo in self.algo_configs:
-                        max_cards = max(1, int(board.size * max_cards_percent))
                         param_grid = algo.get_configurations()
                         for param in param_grid:
-                            tasks.append((algo, board, max_cards, param))
+                            tasks.append((algo, board, max_cards_percent, param))
 
         with ProcessPoolExecutor(max_workers=self.n_workers) as executor:
             futures: list[Future[dict[str, Any]]] = []
@@ -109,16 +111,19 @@ class ExperimentRunner:
         self._save_results(results)
 
     def _run_single_experiment(
-        self, algo: AlgorithmConfig, board: BoardInstance, max_cards: int, params: dict[str, Any]
+        self,
+        algo: AlgorithmConfig,
+        board: BoardInstance,
+        max_cards_percent: float,
+        params: dict[str, Any],
     ) -> dict[str, Any]:
         base: dict[str, Any] = {
             "algo": algo.name,
             "board_id": board.id,
-            "n_rows": board.config.n_rows,
-            "n_columns": board.config.n_columns,
-            "limit_low": board.config.low,
-            "limit_high": board.config.high,
+            "board_config_id": board.config.config_id,
+            "max_cards_percent": max_cards_percent,
         }
+        max_cards = max(1, int(board.size * max_cards_percent))
         if algo.is_deterministic:
             result, elapsed = algo.solver(board.board, max_cards, **params)
             value, _ = result
@@ -155,3 +160,18 @@ class ExperimentRunner:
             partial = df[df["algo"] == algo.name]
             partial = partial.dropna(axis=1, how="all")
             partial.to_csv(self.output_path / f"{algo.name}.csv", index=False)
+
+    def _save_board_config(self, id: int, config: BoardConfig) -> None:
+        config_dict: dict[str, Any] = {
+            "board_config_id": id,
+            "n_rows": config.n_rows,
+            "n_columns": config.n_columns,
+            "limit_low": config.low,
+            "limit_high": config.high,
+        }
+
+        with open(self.output_path / "board_configs.csv", "a+") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=config_dict.keys())
+            if csvfile.tell() == 0:
+                writer.writeheader()
+            writer.writerow(config_dict)
