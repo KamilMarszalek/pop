@@ -1,0 +1,82 @@
+[
+    {
+        "board_config_id": 0,
+        "n_rows": 100,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 1,
+        "n_rows": 150,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 2,
+        "n_rows": 200,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 3,
+        "n_rows": 250,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 4,
+        "n_rows": 300,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 5,
+        "n_rows": 350,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 6,
+        "n_rows": 400,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    },
+    {
+        "board_config_id": 7,
+        "n_rows": 450,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
+    }
+]
