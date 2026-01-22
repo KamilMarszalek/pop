@@ -114,8 +114,8 @@ class ExperimentRunner:
 
         tasks = list(all_tasks())
 
-        sequential_tasks = [t for t in tasks if t[0].name == "dynamic-top-down"]
-        parallel_tasks = [t for t in tasks if t[0].name in ("dynamic-bottom-up", "astar", "greedy")]
+        sequential_tasks = [t for t in tasks if t[0].name in ("dynamic-top-down", "astar")]
+        parallel_tasks = [t for t in tasks if t[0].name in ("dynamic-bottom-up", "greedy")]
 
         return sequential_tasks, parallel_tasks
 
@@ -157,9 +157,10 @@ class ExperimentRunner:
 def _run_single_experiment(task: SingleExperimentTask) -> SingleExperimentResult:
     algo, board_config, board_id, board_seed, max_cards_percent, repetitions, params = task
     board = board_config.generate_instance(board_id, board_seed)
+    solver_params = dict(params)
     if not algo.is_deterministic:
         algo_rng = random.Random(board_seed)
-        params["rng"] = algo_rng
+        solver_params["rng"] = algo_rng
 
     base: dict[str, Any] = {
         "algo": algo.name,
@@ -184,7 +185,7 @@ def _run_single_experiment(task: SingleExperimentTask) -> SingleExperimentResult
         iterations = None
 
         for _ in range(repetitions):
-            result, elapsed = algo.solver(board.board, max_cards, **params)
+            result, elapsed = algo.solver(board.board, max_cards, **solver_params)
             assert len(result) == 3
             value, _, log = result
             iterations, log_value = log
@@ -210,7 +211,6 @@ def _run_single_experiment(task: SingleExperimentTask) -> SingleExperimentResult
             "eval_std": np.std(log_array, axis=0),
         }
 
-        params.pop("rng")
         base.update(params)
         base.update(results)
         return base, log_info

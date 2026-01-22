@@ -25,8 +25,9 @@ class Plotter:
     ) -> None:
         selected = self._get_dimensions(target_config_id)
         frames: list[pd.DataFrame] = []
-        for csv in (self.results_path / "tables").glob("*.csv"):
-            df = pd.read_csv(csv)  # pyright: ignore
+        files = ["astar.csv", "dynamic-bottom-up.csv", "dynamic-top-down.csv", "greedy.csv"]
+        for file in files:
+            df = pd.read_csv(self.results_path / "tables" / file)  # pyright: ignore
             df = df[df["board_config_id"].isin(selected.keys())]
             df = df[df["max_cards_percent"] == max_cards_percent]
             df["dimension"] = df["board_config_id"].map(selected)

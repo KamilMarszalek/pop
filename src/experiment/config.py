@@ -1,7 +1,7 @@
 import json
 import random
 from dataclasses import dataclass
-from itertools import count, product
+from itertools import product
 from pathlib import Path
 from typing import Any, Iterator, Literal
 
@@ -16,9 +16,6 @@ from src.util.types import Board, MWISSolver
 
 N_COLUMNS = 4
 type AlgorithmName = Literal["dynamic-top-down", "dynamic-bottom-up", "astar", "greedy"]
-
-_config_counter = count()
-_board_counter = count()
 
 
 @dataclass
@@ -135,12 +132,19 @@ class ExperimentPhase:
 
 PHASES: list[ExperimentPhase] = [
     ExperimentPhase(
-        name="card-number",
-        board_heights=[500],
+        name="scaling",
+        board_heights=np.arange(100, 501, 50).tolist(),
         distributions=[UniformDistribution(-1000, 1000)],
-        max_cards_percents=np.arange(0.1, 1.01, 0.2).tolist(),
-        boards_per_config=7,
+        max_cards_percents=[0.25, 1.0],
+        boards_per_config=5,
     )
+    # ExperimentPhase(
+    #     name="card-number",
+    #     board_heights=[450],
+    #     distributions=[UniformDistribution(-1000, 1000)],
+    #     max_cards_percents=np.arange(0.1, 1.01, 0.1).tolist(),
+    #     boards_per_config=7,
+    # )
     # ExperimentPhase(
     #     name="comparing-greedy-with-deterministic",
     #     board_heights=np.arange(100, 501, 50).tolist(),
@@ -149,3 +153,5 @@ PHASES: list[ExperimentPhase] = [
     #     boards_per_config=5,
     # ),
 ]
+
+# SCALING

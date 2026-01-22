@@ -78,5 +78,15 @@
             "low": -1000,
             "high": 1000
         }
+    },
+    {
+        "board_config_id": 8,
+        "n_rows": 500,
+        "n_columns": 4,
+        "distribution": {
+            "type": "uniform",
+            "low": -1000,
+            "high": 1000
+        }
     }
 ]
