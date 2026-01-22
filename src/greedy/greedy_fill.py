@@ -1,6 +1,6 @@
 from typing import Callable
 
-from src.sa.board_state import BoardState, Tile
+from src.greedy.board_state import BoardState, Tile
 
 type TileHeuristic = Callable[[BoardState, Tile], int | float]
 

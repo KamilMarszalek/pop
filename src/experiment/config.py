@@ -11,7 +11,7 @@ from src.astar.astar import run_astar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
 from src.experiment.distribution import UniformDistribution, ValueDistribution
-from src.sa.greedy_and_repair import greedy_and_repair
+from src.greedy.greedy_and_repair import greedy_and_repair
 from src.util.types import Board, MWISSolver
 
 N_COLUMNS = 4
@@ -70,7 +70,7 @@ class AlgorithmConfig:
     is_deterministic: bool = True
 
     @classmethod
-    def _default_algo_config(cls, name: AlgorithmName) -> "AlgorithmConfig":
+    def default_algo_config(cls, name: AlgorithmName) -> "AlgorithmConfig":
         match name:
             case "dynamic-top-down":
                 return cls(
@@ -100,7 +100,7 @@ class AlgorithmConfig:
     def get_default_configs() -> list["AlgorithmConfig"]:
         names: list[AlgorithmName] = ["dynamic-bottom-up", "dynamic-top-down", "astar", "greedy"]
 
-        return [AlgorithmConfig._default_algo_config(name) for name in names]
+        return [AlgorithmConfig.default_algo_config(name) for name in names]
 
     def get_configurations(self) -> Iterator[dict[str, Any]]:
         if self.param_grid is None:
@@ -119,7 +119,7 @@ class ExperimentPhase:
     distributions: list[ValueDistribution]
     max_cards_percents: list[float]
     boards_per_config: int
-    repetitions: int = 1
+    repetitions: int = 3
 
     def create_board_configs(self) -> list[BoardConfig]:
         configs: list[BoardConfig] = []
@@ -137,21 +137,19 @@ PHASES: list[ExperimentPhase] = [
         distributions=[UniformDistribution(-1000, 1000)],
         max_cards_percents=[0.25, 1.0],
         boards_per_config=5,
-    )
-    # ExperimentPhase(
-    #     name="card-number",
-    #     board_heights=[450],
-    #     distributions=[UniformDistribution(-1000, 1000)],
-    #     max_cards_percents=np.arange(0.1, 1.01, 0.1).tolist(),
-    #     boards_per_config=7,
-    # )
-    # ExperimentPhase(
-    #     name="comparing-greedy-with-deterministic",
-    #     board_heights=np.arange(100, 501, 50).tolist(),
-    #     distributions=[UniformDistribution(-1000, 1000)],
-    #     max_cards_percents=[0.1],
-    #     boards_per_config=5,
-    # ),
+    ),
+    ExperimentPhase(
+        name="card-number",
+        board_heights=[500],
+        distributions=[UniformDistribution(-1000, 1000)],
+        max_cards_percents=np.arange(0.1, 1.01, 0.1).tolist(),
+        boards_per_config=5,
+    ),
+    ExperimentPhase(
+            name="genetic",
+            board_heights=[200],
+            distributions=[UniformDistribution(-1000, 1000)],
+            max_cards_percents=[0.25],
+            boards_per_config=5,
+        ),
 ]
-
-# SCALING

@@ -1,8 +1,8 @@
 import random
 
-from src.sa.board_state import BoardState
-from src.sa.greedy_fill import greedy_fill, weight
-from src.sa.successor_generator import FixLocalRegions
+from src.greedy.board_state import BoardState
+from src.greedy.greedy_fill import greedy_fill, weight
+from src.greedy.successor_generator import FixLocalRegions
 from src.util.time_measure import measure_time
 from src.util.types import Board, MWISResult
 

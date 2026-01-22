@@ -1,27 +1,19 @@
 from pathlib import Path
 
-from src.experiment.config import PHASES
+from src.experiment.config import PHASES, AlgorithmConfig
+from src.experiment.runner import ExperimentRunner, RunnerConfig
 
 SEED = 42
 
 
 def main() -> None:
-    # algo_configs = AlgorithmConfig.get_default_configs()
-    # for phase in PHASES:
-    #     runner_config = RunnerConfig(
-    #         phase, algo_configs, Path("results") / Path(f"{phase.name}"), SEED
-    #     )
-    #     runner = ExperimentRunner(runner_config)
-    #     runner.run_parallel()
+    algo_configs = AlgorithmConfig.get_default_configs()
     for phase in PHASES:
-        nondeterministic_csv_path = (
-            Path("results") / Path(f"{phase.name}") / Path("tables/greedy.csv")
+        runner_config = RunnerConfig(
+            phase, algo_configs, Path("results") / Path(f"{phase.name}"), SEED
         )
-        deterministic_csv_path = Path("results") / Path(f"{phase.name}") / Path("tables/astar.csv")
-        output_csv_path = Path("results") / Path(f"{phase.name}") / Path("tables/greedy.csv")
-
-        maker = NonDete(nondeterministic_csv_path, deterministic_csv_path, output_csv_path)
-        maker.make_results()
+        runner = ExperimentRunner(runner_config)
+        runner.run_parallel()
 
 
 if __name__ == "__main__":

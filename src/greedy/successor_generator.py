@@ -3,7 +3,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from src.dp.bottom_up import mwis_bottom_up
-from src.sa.board_state import BoardState, Tile
+from src.greedy.board_state import BoardState, Tile
 
 
 @dataclass
