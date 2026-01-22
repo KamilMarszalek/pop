@@ -52,14 +52,15 @@ def aggregate_results() -> None:
             )
 
             aggregator = ResultAggregator(input_csv_path, output_csv_path)
-            if config.name == "greedy":
-                groupby_columns = ["board_config_id"]
+            try:
+                groupby_columns = ["board_config_id", "max_cards_percent"]
                 agg_columns = {"value_mean": ["mean", "std"], "time_mean": ["mean", "std"]}
+                aggregator.aggregate_results(groupby_columns, agg_columns)
 
-            else:
-                groupby_columns = ["board_config_id"]
+            except Exception:
+                groupby_columns = ["board_config_id", "max_cards_percent"]
                 agg_columns = {"value": ["mean", "std"], "time": ["mean", "std"]}
-            aggregator.aggregate_results(groupby_columns, agg_columns)
+                aggregator.aggregate_results(groupby_columns, agg_columns)
 
 
 if __name__ == "__main__":

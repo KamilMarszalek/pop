@@ -139,7 +139,7 @@ def build_tables() -> None:
             df[
                 f"{map_column.get(csv.stem.split('_')[0].replace('-', '_'), csv.stem.split('_')[0].replace('-', '_'))}"
             ] = df["time_mean"]
-            df = df.drop(columns=["time_mean", "time_std", "value_mean", "value_std"])
+            df = df.drop(columns=["time_mean", "value_mean", "value_std"])
             dataframes.append(df)
 
         for df in dataframes:
