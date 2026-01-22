@@ -1,7 +1,7 @@
 import json
 import random
 from dataclasses import dataclass
-from itertools import product
+from itertools import count, product
 from pathlib import Path
 from typing import Any, Iterator, Literal
 
@@ -16,6 +16,9 @@ from src.util.types import Board, MWISSolver
 N_COLUMNS = 4
 type AlgorithmName = Literal["dynamic-top-down", "dynamic-bottom-up", "astar"]
 
+_config_counter = count()
+_board_counter = count()
+
 
 @dataclass
 class BoardConfig:
@@ -24,12 +27,13 @@ class BoardConfig:
     n_columns: int
     distribution: ValueDistribution
 
-    def generate(self, id: int, seed: int) -> "BoardInstance":
+    def generate_instance(self, id: int, seed: int) -> "BoardInstance":
         rng = random.Random(seed)
         board = [
             [self.distribution.sample(rng) for _ in range(self.n_columns)]
             for _ in range(self.n_rows)
         ]
+
         return BoardInstance(id, seed, board, self)
 
     @staticmethod
@@ -50,7 +54,7 @@ class BoardConfig:
 
 @dataclass
 class BoardInstance:
-    id: int
+    board_id: int
     seed: int
     board: Board
     config: BoardConfig
