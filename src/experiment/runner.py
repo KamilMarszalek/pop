@@ -49,6 +49,8 @@ class ExperimentRunner:
         if n_workers is None:
             n_workers = n_workers or (os.cpu_count() or 1)
 
+        print(f"\n=== Starting phase: {self.phase.name} ===")
+
         self.board_configs = self.phase.create_board_configs()
         BoardConfig.save_board_configs(self.board_configs, self.board_config_path)
 
@@ -56,6 +58,10 @@ class ExperimentRunner:
 
         try:
             sequential_tasks, parallel_tasks = self._tasks()
+            print(
+                f"Phase {self.phase.name}: {len(parallel_tasks)} parallel, {len(sequential_tasks)} sequential tasks"
+            )
+
             with ProcessPoolExecutor(max_workers=n_workers) as executor:
                 for i, (res, log) in enumerate(
                     executor.map(_run_single_experiment, parallel_tasks, chunksize=1)
@@ -65,7 +71,9 @@ class ExperimentRunner:
                         self._save_log_incremental(log)
 
                     if (i + 1) % 10 == 0:
-                        print(f"Completed {i + 1} parallel tasks...")
+                        print(
+                            f"[{self.phase.name}]: Completed {i + 1}/{len(sequential_tasks)} parallel tasks"
+                        )
 
             for i, task in enumerate(sequential_tasks):
                 res, log = _run_single_experiment(task)
@@ -74,7 +82,11 @@ class ExperimentRunner:
                     self._save_log_incremental(log)
 
                 if (i + 1) % 10 == 0:
-                    print(f"Completed {i + 1} sequential tasks...")
+                    print(
+                        f"[{self.phase.name}] Completed {i + 1}/{len(sequential_tasks)} sequential tasks"
+                    )
+
+            print(f"=== Finished phase: {self.phase.name} ===\n")
 
         finally:
             self._close_csv_files()
