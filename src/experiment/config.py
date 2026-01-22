@@ -145,4 +145,11 @@ PHASES: list[ExperimentPhase] = [
         max_cards_percents=[0.25],
         boards_per_config=5,
     ),
+    ExperimentPhase(
+        name="comparing-greedy-with-deterministic",
+        board_heights=np.arange(100, 501, 50).tolist(),
+        distribution=[UniformDistribution(-1000, 1000)],
+        max_cards_percents=[0.1],
+        boards_per_config=5,
+    ),
 ]
