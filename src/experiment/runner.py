@@ -4,7 +4,7 @@ import random
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Iterator, cast
 
 import numpy as np
 import pandas as pd
@@ -70,8 +70,7 @@ class ExperimentRunner:
         finally:
             self._close_csv_files()
 
-    def _experiment_tasks(self) -> list[SingleExperimentTask]:
-        tasks: list[SingleExperimentTask] = []
+    def _experiment_tasks(self) -> Iterator[SingleExperimentTask]:
         for i, _ in enumerate(self.board_configs):
             for bi in range(self.phase.boards_per_config):
                 board_seed = self.rng.randint(0, 2**32 - 1)
@@ -79,8 +78,7 @@ class ExperimentRunner:
                     for algo in self.algo_configs:
                         for params in algo.get_configurations():
                             params_copy = dict(params)
-                            tasks.append((algo, i, bi, board_seed, max_cards_percent, params_copy))
-        return tasks
+                            yield algo, i, bi, board_seed, max_cards_percent, params_copy
 
     def _init_csv_files(self) -> None:
         for algo in self.algo_configs:

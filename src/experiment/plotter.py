@@ -8,13 +8,13 @@ import seaborn as sns
 
 
 class Plotter:
+    phase: str
     results_path: Path = Path("results")
     output_path: Path = Path("plots")
 
-    def __init__(
-        self, results_path: Path = Path("results"), output_path: Path = Path("plots")
-    ) -> None:
-        self.results_path = results_path
+    def __init__(self, phase: str, output_path: Path = Path("plots")) -> None:
+        self.name = phase
+        self.results_path = Path("results") / self.name
         self.results_path.mkdir(parents=True, exist_ok=True)
 
         self.output_path = output_path
@@ -61,7 +61,7 @@ class Plotter:
         plt.xlabel("Dimension (n_rows)")
         plt.ylabel("Time (ms)")
         plt.title("Runtime vs Dimension by Algorithm")
-        plt.savefig(self.output_path / f"dim-time-{target_config_id}", dpi=200)
+        plt.savefig(self.output_path / f"{self.name}-dim-time", dpi=200)
 
     def create_time_cards_percent_plot(
         self, target_config_id: int, greedy_params: dict[str, Any]
@@ -83,24 +83,13 @@ class Plotter:
             .reset_index(drop=True)
         )
 
-        # Plot
         sns.set_theme(style="whitegrid", palette="colorblind")
         plt.figure(figsize=(8, 5))
         sns.lineplot(data=agg, x="max_cards_percent", y="time_mean", hue="algo", marker="o")
-        # for algo in agg["algo"].unique():
-        #     subset = agg.loc[agg["algo"] == algo, :]
-        #     plt.errorbar(  # pyright: ignore
-        #         subset["max_cards_percent"],
-        #         subset["time_mean"],
-        #         yerr=subset["time_std"],
-        #         fmt="none",
-        #         capsize=3,
-        #     )
-
         plt.xlabel("Avaliable card (% of board size)")
         plt.ylabel("Time (ms)")
         plt.title("Runtime vs avaliable cards")
-        plt.savefig(self.output_path / f"cards-time-{target_config_id}", dpi=200)
+        plt.savefig(self.output_path / f"{self.name}-cards-time", dpi=200)
 
     def _get_dimensions(self, target_config_id: int) -> dict[int, int]:
         with open(self.results_path / "board_configs" / "board_configs.json") as jsonfile:
@@ -124,5 +113,7 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter()
-    plotter.create_time_cards_percent_plot(0, {"n_iter": 50, "region_percent_size": 0.05})
+    plotter1 = Plotter("scaling-v1")
+    plotter2 = Plotter("scaling-v2")
+    plotter1.create_time_dimension_plot(0, 1.0, {"n_iter": 50, "region_percent_size": 0.05})
+    plotter2.create_time_dimension_plot(0, 0.25, {"n_iter": 50, "region_percent_size": 0.05})

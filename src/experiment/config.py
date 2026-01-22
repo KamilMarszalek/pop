@@ -89,7 +89,7 @@ class AlgorithmConfig:
 
     @staticmethod
     def get_default_configs() -> list["AlgorithmConfig"]:
-        names: list[AlgorithmName] = ["dynamic-bottom-up", "astar"]
+        names: list[AlgorithmName] = ["dynamic-bottom-up", "dynamic-top-down", "astar"]
         return [AlgorithmConfig._default_algo_config(name) for name in names]
 
     def get_configurations(self) -> Iterator[dict[str, Any]]:
@@ -122,10 +122,17 @@ class ExperimentPhase:
 
 PHASES: list[ExperimentPhase] = [
     ExperimentPhase(
-        name="scaling",
-        board_heights=np.arange(100, 1000, 100).tolist(),
+        name="scaling-v1",
+        board_heights=np.arange(100, 501, 50).tolist(),
         distributions=[UniformDistribution(-1000, 1000)],
         max_cards_percents=[1.0],
         boards_per_config=5,
-    )
+    ),
+    ExperimentPhase(
+        name="scaling-v2",
+        board_heights=np.arange(100, 501, 50).tolist(),
+        distributions=[UniformDistribution(-1000, 1000)],
+        max_cards_percents=[0.25],
+        boards_per_config=5,
+    ),
 ]
