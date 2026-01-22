@@ -114,8 +114,9 @@ class ExperimentRunner:
 
         tasks = list(all_tasks())
 
-        sequential_tasks = [t for t in tasks if t[0].name in ("dynamic-top-down", "astar")]
-        parallel_tasks = [t for t in tasks if t[0].name in ("dynamic-bottom-up", "greedy")]
+        sequential_names = {"dynamic-top-down", "astar"}
+        sequential_tasks = [t for t in tasks if t[0].name in sequential_names]
+        parallel_tasks = [t for t in tasks if t[0].name not in sequential_names]
 
         return sequential_tasks, parallel_tasks
 

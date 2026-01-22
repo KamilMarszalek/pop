@@ -1,3 +1,5 @@
+import random
+
 from src.ga.crossover import CrossoverFunc
 from src.ga.mutation import MutationFunc
 from src.ga.q import QFunc
@@ -93,6 +95,7 @@ class GeneticAlgorithm:
 
     @measure_time()
     def run(self) -> MWISResult:
+        log_values: list[int] = [self.best_value]
         while not self._stop():
             self.reproduction()
             self.crossover()
@@ -105,6 +108,45 @@ class GeneticAlgorithm:
                 self.best_unit = best_candidate
                 self.best_value = best_candidate_evaluation
                 # print(self.best_value)
+            log_values.append(self.best_value)
             self.succession()
             self.t += 1
-        return self.best_value, self.best_unit.genes
+        log = ([i for i in range(len(log_values))], log_values)
+        return self.best_value, self.best_unit.genes, log
+
+
+def run_genetic_algorithm(
+    board: Board,
+    num_of_cards: int,
+    *,
+    q: QFunc,
+    mutation: MutationFunc,
+    reproduction: ReproducitionFunc,
+    crossover: CrossoverFunc,
+    succession: SuccesionFunc,
+    population_count: int,
+    probability_of_mutation: float,
+    probability_of_crossover: float,
+    fes: int,
+    num_of_best_survivors: int = 0,
+    starting_population: Population | None = None,
+    rng: random.Random | None = None,
+) -> MWISResult:
+    if rng is not None:
+        random.seed(rng.getrandbits(64))
+    ga = GeneticAlgorithm(
+        q,
+        mutation,
+        reproduction,
+        crossover,
+        succession,
+        population_count,
+        probability_of_mutation,
+        probability_of_crossover,
+        fes,
+        num_of_cards,
+        board,
+        num_of_best_survivors,
+        starting_population,
+    )
+    return ga.run()
