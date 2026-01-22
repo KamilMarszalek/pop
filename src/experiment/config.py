@@ -11,10 +11,11 @@ from src.astar.astar import run_astar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
 from src.experiment.distribution import UniformDistribution, ValueDistribution
+from src.sa.greedy_and_repair import greedy_and_repair
 from src.util.types import Board, MWISSolver
 
 N_COLUMNS = 4
-type AlgorithmName = Literal["dynamic-top-down", "dynamic-bottom-up", "astar"]
+type AlgorithmName = Literal["dynamic-top-down", "dynamic-bottom-up", "astar", "greedy"]
 
 _config_counter = count()
 _board_counter = count()
@@ -90,10 +91,15 @@ class AlgorithmConfig:
                 )
             case "astar":
                 return cls(name="astar", solver=run_astar, param_grid=None, is_deterministic=True)
+            case "greedy":
+                return cls(
+                    name="greedy", solver=greedy_and_repair, param_grid=None, is_deterministic=False
+                )
 
     @staticmethod
     def get_default_configs() -> list["AlgorithmConfig"]:
-        names: list[AlgorithmName] = ["dynamic-bottom-up", "dynamic-top-down", "astar"]
+        names: list[AlgorithmName] = ["dynamic-bottom-up", "dynamic-top-down", "astar", "greedy"]
+
         return [AlgorithmConfig._default_algo_config(name) for name in names]
 
     def get_configurations(self) -> Iterator[dict[str, Any]]:
