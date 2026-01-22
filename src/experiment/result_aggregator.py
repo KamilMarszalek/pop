@@ -11,24 +11,27 @@ class ResultAggregator:
         self.output_csv_path = output_csv_path
 
     def aggregate_results(self, groupby_columns: list, agg_columns: dict) -> None:
-        if not self.input_csv_path.exists():
-            print(f"Skipping aggregation; input not found: {self.input_csv_path}")
-            return
-        if self.input_csv_path.stat().st_size == 0:
-            print(f"Skipping aggregation; input is empty: {self.input_csv_path}")
-            return
-        try:
-            df = pd.read_csv(self.input_csv_path)
-        except pd.errors.EmptyDataError:
-            print(f"Skipping aggregation; input has no columns: {self.input_csv_path}")
-            return
+        df = pd.read_csv(self.input_csv_path)
         aggregated_df = df.groupby(groupby_columns).agg(agg_columns).reset_index()
 
         aggregated_df.columns = [
             "_".join(col).strip() if isinstance(col, tuple) else col
             for col in aggregated_df.columns.values
         ]
+        if "value_mean_mean" in aggregated_df.columns:
+            aggregated_df = aggregated_df.rename(
+                columns={
+                    "value_mean_mean": "value_mean",
+                    "value_mean_std": "value_std",
+                    "time_mean_mean": "time_mean",
+                    "time_mean_std": "time_std",
+                }
+            )
 
+        aggregated_df["board_config_id"] = aggregated_df["board_config_id_"]
+        aggregated_df = aggregated_df.drop(
+            columns=[col for col in aggregated_df.columns if col.endswith("_")]
+        )
         aggregated_df.to_csv(self.output_csv_path, index=False)
 
 
@@ -52,6 +55,7 @@ def aggregate_results() -> None:
             if config.name == "greedy":
                 groupby_columns = ["board_config_id"]
                 agg_columns = {"value_mean": ["mean", "std"], "time_mean": ["mean", "std"]}
+
             else:
                 groupby_columns = ["board_config_id"]
                 agg_columns = {"value": ["mean", "std"], "time": ["mean", "std"]}
