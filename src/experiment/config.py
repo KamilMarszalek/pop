@@ -73,7 +73,7 @@ class AlgorithmConfig:
     is_deterministic: bool = True
 
     @classmethod
-    def default_algo_config(cls, name: AlgorithmName) -> "AlgorithmConfig":
+    def _default_algo_config(cls, name: AlgorithmName) -> "AlgorithmConfig":
         match name:
             case "dynamic-top-down":
                 return cls(
@@ -103,7 +103,7 @@ class AlgorithmConfig:
     def get_default_configs() -> list["AlgorithmConfig"]:
         names: list[AlgorithmName] = ["dynamic-bottom-up", "dynamic-top-down", "astar", "greedy"]
 
-        return [AlgorithmConfig.default_algo_config(name) for name in names]
+        return [AlgorithmConfig._default_algo_config(name) for name in names]
 
     def get_configurations(self) -> Iterator[dict[str, Any]]:
         if self.param_grid is None:
@@ -122,7 +122,7 @@ class ExperimentPhase:
     distributions: list[ValueDistribution]
     max_cards_percents: list[float]
     boards_per_config: int
-    repetitions: int = 3
+    repetitions: int = 1
 
     def create_board_configs(self) -> list[BoardConfig]:
         configs: list[BoardConfig] = []
@@ -135,19 +135,12 @@ class ExperimentPhase:
 
 PHASES: list[ExperimentPhase] = [
     ExperimentPhase(
-        name="greedy-only",
-        board_heights=np.arange(100, 501, 50).tolist(),
+        name="card-number",
+        board_heights=[500],
         distributions=[UniformDistribution(-1000, 1000)],
-        max_cards_percents=[0.25, 1.0],
+        max_cards_percents=np.arange(0.1, 1.01, 0.2).tolist(),
         boards_per_config=7,
     )
-    # ExperimentPhase(
-    #     name="card-number",
-    #     board_heights=[500],
-    #     distributions=[UniformDistribution(-1000, 1000)],
-    #     max_cards_percents=np.arange(0.1, 1.01, 0.1).tolist(),
-    #     boards_per_config=5,
-    # )
     # ExperimentPhase(
     #     name="comparing-greedy-with-deterministic",
     #     board_heights=np.arange(100, 501, 50).tolist(),

@@ -8,7 +8,7 @@ SEED = 42
 
 
 def main() -> None:
-    algo_configs = [AlgorithmConfig.default_algo_config("greedy")]
+    algo_configs = AlgorithmConfig.get_default_configs()
     for phase in PHASES:
         runner_config = RunnerConfig(
             phase, algo_configs, Path("results") / Path(f"{phase.name}"), SEED
