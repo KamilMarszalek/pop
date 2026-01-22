@@ -72,7 +72,7 @@ class ExperimentRunner:
 
                     if (i + 1) % 10 == 0:
                         print(
-                            f"[{self.phase.name}]: Completed {i + 1}/{len(sequential_tasks)} parallel tasks"
+                            f"[{self.phase.name}]: Completed {i + 1}/{len(parallel_tasks)} parallel tasks"
                         )
 
             for i, task in enumerate(sequential_tasks):
@@ -115,7 +115,7 @@ class ExperimentRunner:
         tasks = list(all_tasks())
 
         sequential_tasks = [t for t in tasks if t[0].name == "dynamic-top-down"]
-        parallel_tasks = [t for t in tasks if t[0].name in ("dynamic-bottom-up", "astar")]
+        parallel_tasks = [t for t in tasks if t[0].name in ("dynamic-bottom-up", "astar", "greedy")]
 
         return sequential_tasks, parallel_tasks
 

@@ -93,7 +93,10 @@ class AlgorithmConfig:
                 return cls(name="astar", solver=run_astar, param_grid=None, is_deterministic=True)
             case "greedy":
                 return cls(
-                    name="greedy", solver=greedy_and_repair, param_grid=None, is_deterministic=False
+                    name="greedy",
+                    solver=greedy_and_repair,
+                    param_grid={"n_iter": [200], "region_percent_size": [0.05]},
+                    is_deterministic=False,
                 )
 
     @staticmethod
@@ -132,24 +135,17 @@ class ExperimentPhase:
 
 PHASES: list[ExperimentPhase] = [
     ExperimentPhase(
-        name="scaling-v1",
-        board_heights=np.arange(100, 501, 50).tolist(),
+        name="card-number",
+        board_heights=[500],
         distributions=[UniformDistribution(-1000, 1000)],
-        max_cards_percents=[1.0],
-        boards_per_config=5,
-    ),
-    ExperimentPhase(
-        name="scaling-v2",
-        board_heights=np.arange(100, 501, 50).tolist(),
-        distributions=[UniformDistribution(-1000, 1000)],
-        max_cards_percents=[0.25],
-        boards_per_config=5,
-    ),
-    ExperimentPhase(
-        name="comparing-greedy-with-deterministic",
-        board_heights=np.arange(100, 501, 50).tolist(),
-        distribution=[UniformDistribution(-1000, 1000)],
-        max_cards_percents=[0.1],
-        boards_per_config=5,
-    ),
+        max_cards_percents=np.arange(0.1, 1.01, 0.2).tolist(),
+        boards_per_config=7,
+    )
+    # ExperimentPhase(
+    #     name="comparing-greedy-with-deterministic",
+    #     board_heights=np.arange(100, 501, 50).tolist(),
+    #     distributions=[UniformDistribution(-1000, 1000)],
+    #     max_cards_percents=[0.1],
+    #     boards_per_config=5,
+    # ),
 ]

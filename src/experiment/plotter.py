@@ -61,7 +61,9 @@ class Plotter:
         plt.xlabel("Dimension (n_rows)")
         plt.ylabel("Time (ms)")
         plt.title("Runtime vs Dimension by Algorithm")
-        plt.savefig(self.output_path / f"{self.name}-dim-time", dpi=200)
+        plt.savefig(
+            self.output_path / f"{self.name}-dim-time-{int(max_cards_percent * 100)}", dpi=200
+        )
 
     def create_time_cards_percent_plot(
         self, target_config_id: int, greedy_params: dict[str, Any]
@@ -113,7 +115,6 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter1 = Plotter("scaling-v1")
-    plotter2 = Plotter("scaling-v2")
-    plotter1.create_time_dimension_plot(0, 1.0, {"n_iter": 50, "region_percent_size": 0.05})
-    plotter2.create_time_dimension_plot(0, 0.25, {"n_iter": 50, "region_percent_size": 0.05})
+    plotter1 = Plotter("scaling")
+    plotter1.create_time_dimension_plot(0, 0.25, {"n_iter": 200, "region_percent_size": 0.05})
+    plotter1.create_time_dimension_plot(0, 1.0, {"n_iter": 200, "region_percent_size": 0.05})
