@@ -14,10 +14,12 @@ class NonDeterministicResultMaker:
     def make_results(self) -> None:
         non_deterministic_df = pd.read_csv(self.nondeterministic_csv_path)
         deterministic_df = pd.read_csv(
-            self.deterministic_csv_path, usecols=["board_id", "value", "time"]
+            self.deterministic_csv_path, usecols=["board_id", "max_cards_percent", "value", "time"]
         )
 
-        merged_df = pd.merge(non_deterministic_df, deterministic_df, on="board_id")
+        merged_df = pd.merge(
+            non_deterministic_df, deterministic_df, on=["board_id", "max_cards_percent"]
+        )
         merged_df["approximation_ratio"] = merged_df["value_mean"] / merged_df["value"]
         merged_df["time_ratio"] = merged_df["time_mean"] / merged_df["time"]
         merged_df = merged_df.drop(columns=["value", "time"])
@@ -25,8 +27,8 @@ class NonDeterministicResultMaker:
 
 
 if __name__ == "__main__":
-    non_deterministic_csv_path = Path("results/scaling-v1/tables/greedy.csv")
-    deterministic_csv_path = Path("results/scaling-v1/tables/astar.csv")
+    non_deterministic_csv_path = Path("results/scaling/tables/greedy.csv")
+    deterministic_csv_path = Path("results/scaling/tables/astar.csv")
     maker = NonDeterministicResultMaker(
         non_deterministic_csv_path, deterministic_csv_path, Path("greedy_enriched.csv")
     )

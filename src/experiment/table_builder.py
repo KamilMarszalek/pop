@@ -10,6 +10,7 @@ map_column = {
     "dynamic_bottom_up": "Dynamic BU [s]",
     "astar": "A* [s]",
     "greedy": "Greedy [s]",
+    "ga": "Genetic Algorithm [s]",
 }
 
 
@@ -132,27 +133,66 @@ class TableBuilder:
 
 def build_tables() -> None:
     for phase in PHASES:
-        dataframes = []
         results_path = Path("results") / Path(f"{phase.name}") / Path("tables")
+        grouped_tables: dict[str, list[pd.DataFrame]] = {}
         for csv in results_path.glob("*_aggregated.csv"):
             df = pd.read_csv(csv)
-            df[
-                f"{map_column.get(csv.stem.split('_')[0].replace('-', '_'), csv.stem.split('_')[0].replace('-', '_'))}"
-            ] = df["time_mean"]
-            df = df.drop(columns=["time_mean", "value_mean", "value_std"])
-            dataframes.append(df)
+            stem = csv.stem
+            if stem.endswith("_aggregated"):
+                stem = stem[: -len("_aggregated")]
+            algo_name = stem
+            percent_suffix = "all"
+            if "_" in stem:
+                algo_candidate, _, suffix = stem.rpartition("_")
+                if suffix.endswith("pct"):
+                    algo_name = algo_candidate
+                    percent_suffix = suffix
 
-        for df in dataframes:
-            df.set_index("board_config_id", inplace=True)
-            merged_df = pd.concat(dataframes, axis=1)
-            merged_df.reset_index(inplace=True)
-            merged_df.rename(columns={"board_config_id": "Board Config ID"}, inplace=True)
+            algo_key = algo_name.replace("-", "_")
+            algo_label = map_column.get(algo_key, algo_name)
+            combined_column = algo_label
+            if "time_mean" in df.columns:
+                df[combined_column] = df.apply(
+                    lambda row: _format_mean_std(
+                        row["time_mean"], row["time_std"] if "time_std" in row else np.nan, "%.3f"
+                    ),
+                    axis=1,
+                )
+                df = df.drop(
+                    columns=["time_mean", "time_std", "value_mean", "value_std"], errors="ignore"
+                )
+            elif "time" in df.columns:
+                df[combined_column] = df.apply(
+                    lambda row: _format_mean_std(
+                        row["time"], row["time_std"] if "time_std" in row else np.nan, "%.3f"
+                    ),
+                    axis=1,
+                )
+                df = df.drop(columns=["time", "value"], errors="ignore")
 
-            caption = f"Time results - {phase.name.replace('-', ' ').title()}"
-            label = f"tab:{map_column.get(phase.name, phase.name)}"
+            df.rename(columns={"board_config_id": "Board Config ID"}, inplace=True)
+            df = df.set_index("Board Config ID")[[combined_column]].reset_index()
+            grouped_tables.setdefault(percent_suffix, []).append(df)
+
+        for percent_suffix, dataframes in grouped_tables.items():
+            if not dataframes:
+                continue
+            merged_df = pd.concat(
+                [df.set_index("Board Config ID") for df in dataframes], axis=1
+            ).reset_index()
+            caption_suffix = ""
+            output_suffix = ""
+            if percent_suffix != "all":
+                percent_label = percent_suffix[:-3].replace("p", ".")
+                caption_suffix = f" ({percent_label}%)"
+                output_suffix = f"_{percent_suffix}"
+            caption = f"Time results - {phase.name.replace('-', ' ').title()}{caption_suffix}"
+            label = f"tab:{phase.name}{output_suffix}"
             table_builder = TableBuilder(merged_df, caption=caption, label=label)
-            latex_output_path = results_path / Path(f"{phase.name}_table.tex")
+            latex_output_path = results_path / Path(f"{phase.name}{output_suffix}_table.tex")
             table_builder.to_latex(latex_output_path)
+
+        _build_greedy_ratio_tables(results_path, phase.name)
         board_config_path = (
             Path("results") / Path(f"{phase.name}") / Path("board_configs") / "board_configs.json"
         )
@@ -200,6 +240,115 @@ def _format_distribution(value: object) -> str:
             )
             return f"skewed({low}, {high}, p={ratio_str})"
     return str(value)
+
+
+def _format_mean_std(
+    mean: object, std: object, float_format: str, multiplier: float = 1.0
+) -> str:
+    if pd.isna(mean):
+        return "NaN"
+    mean_str = _format_scaled_value(mean, float_format, multiplier)
+    if pd.isna(std):
+        return mean_str
+    std_str = _format_scaled_value(std, float_format, multiplier)
+    return f"{mean_str} +/- {std_str}"
+
+
+def _format_scaled_value(value: object, float_format: str, multiplier: float) -> str:
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        scaled = float(value) * multiplier
+        return float_format % scaled
+    return str(value)
+
+
+def _format_max_cards_percent(max_cards_percent: float) -> str:
+    percent = round(float(max_cards_percent) * 100, 6)
+    if abs(percent - round(percent)) < 1e-6:
+        return f"{int(round(percent))}pct"
+    trimmed = f"{percent:.3f}".rstrip("0").rstrip(".")
+    return f"{trimmed.replace('.', 'p')}pct"
+
+
+def _build_greedy_ratio_tables(results_path: Path, phase_name: str) -> None:
+    greedy_csv = results_path / "greedy.csv"
+    if not greedy_csv.exists():
+        return
+    df = pd.read_csv(greedy_csv)
+    if "approximation_ratio" not in df.columns or "time_ratio" not in df.columns:
+        return
+
+    groupby_columns = ["board_config_id"]
+    if "max_cards_percent" in df.columns:
+        groupby_columns.append("max_cards_percent")
+
+    aggregated_df = (
+        df.groupby(groupby_columns)[["approximation_ratio", "time_ratio"]]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+    aggregated_df.columns = [
+        "_".join(col).strip() if isinstance(col, tuple) else col
+        for col in aggregated_df.columns.values
+    ]
+    if (
+        "board_config_id_" in aggregated_df.columns
+        and "board_config_id" not in aggregated_df.columns
+    ):
+        aggregated_df = aggregated_df.rename(columns={"board_config_id_": "board_config_id"})
+    if (
+        "max_cards_percent_" in aggregated_df.columns
+        and "max_cards_percent" not in aggregated_df.columns
+    ):
+        aggregated_df = aggregated_df.rename(columns={"max_cards_percent_": "max_cards_percent"})
+
+    if "max_cards_percent" in aggregated_df.columns:
+        percent_values = sorted(aggregated_df["max_cards_percent"].dropna().unique())
+    else:
+        percent_values = ["all"]
+
+    for percent_value in percent_values:
+        if percent_value == "all":
+            percent_suffix = "all"
+            subset_df = aggregated_df
+        else:
+            percent_suffix = _format_max_cards_percent(percent_value)
+            subset_df = aggregated_df[aggregated_df["max_cards_percent"] == percent_value]
+
+        table_df = pd.DataFrame(
+            {
+                "Board Config ID": subset_df["board_config_id"],
+                "Approximation Ratio [%]": subset_df.apply(
+                    lambda row: _format_mean_std(
+                        row.get("approximation_ratio_mean"),
+                        row.get("approximation_ratio_std"),
+                        "%.2f",
+                        100.0,
+                    ),
+                    axis=1,
+                ),
+                "Time Ratio [%]": subset_df.apply(
+                    lambda row: _format_mean_std(
+                        row.get("time_ratio_mean"),
+                        row.get("time_ratio_std"),
+                        "%.2f",
+                        100.0,
+                    ),
+                    axis=1,
+                ),
+            }
+        )
+
+        caption_suffix = ""
+        output_suffix = ""
+        if percent_suffix != "all":
+            percent_label = percent_suffix[:-3].replace("p", ".")
+            caption_suffix = f" ({percent_label}%)"
+            output_suffix = f"_{percent_suffix}"
+        caption = f"Greedy ratios - {phase_name.replace('-', ' ').title()}{caption_suffix}"
+        label = f"tab:greedy_ratios_{phase_name}{output_suffix}"
+        table_builder = TableBuilder(table_df, caption=caption, label=label)
+        latex_output_path = results_path / Path(f"greedy_ratios{output_suffix}_table.tex")
+        table_builder.to_latex(latex_output_path)
 
 
 if __name__ == "__main__":

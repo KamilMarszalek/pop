@@ -5,6 +5,8 @@ from itertools import product
 from pathlib import Path
 from typing import Any, Iterator, Literal
 
+import numpy as np
+
 from src.astar.astar import run_astar
 from src.dp.bottom_up import mwis_bottom_up
 from src.dp.top_down import mwis_top_down
@@ -129,13 +131,13 @@ class ExperimentPhase:
 
 
 PHASES: list[ExperimentPhase] = [
-    # ExperimentPhase(
-    #     name="scaling",
-    #     board_heights=np.arange(100, 501, 50).tolist(),
-    #     distributions=[UniformDistribution(-1000, 1000)],
-    #     max_cards_percents=[0.25, 1.0],
-    #     boards_per_config=5,
-    # )
+    ExperimentPhase(
+        name="scaling",
+        board_heights=np.arange(100, 501, 50).tolist(),
+        distributions=[UniformDistribution(-1000, 1000)],
+        max_cards_percents=[0.25, 1.0],
+        boards_per_config=5,
+    ),
     # ExperimentPhase(
     #     name="card-number",
     #     board_heights=[450],
@@ -156,7 +158,7 @@ PHASES: list[ExperimentPhase] = [
         distributions=[UniformDistribution(-1000, 1000)],
         max_cards_percents=[0.25],
         boards_per_config=5,
-    )
+    ),
 ]
 
 # SCALING
