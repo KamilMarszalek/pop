@@ -1,90 +1,36 @@
 import csv
+import os
 import random
-from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from itertools import product
 from pathlib import Path
-from typing import Any, Iterator, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
-from src.util.types import Board, MWISSolver
+from src.experiment.config import AlgorithmConfig, BoardConfig, ExperimentPhase
 
-type SingleExperimentTask = tuple[AlgorithmConfig, BoardInstance, float, dict[str, Any]]
+type SingleExperimentTask = tuple[AlgorithmConfig, int, int, int, float, dict[str, Any]]
 type SingleExperimentResult = tuple[dict[str, Any], dict[str, Any] | None]
 
 
 @dataclass
-class BoardConfig:
-    config_id: int
-    n_rows: int
-    n_columns: int
-    low: int
-    high: int
-
-    def generate(self, id: int, seed: int) -> "BoardInstance":
-        rng = random.Random(seed)
-        board = [
-            [rng.randint(self.low, self.high) for _ in range(self.n_columns)]
-            for _ in range(self.n_rows)
-        ]
-        return BoardInstance(id, seed, board, self)
-
-
-@dataclass
-class BoardInstance:
-    id: int
-    seed: int
-    board: Board
-    config: BoardConfig
-
-    @property
-    def size(self) -> int:
-        return self.config.n_rows * self.config.n_columns
-
-
-@dataclass
-class AlgorithmConfig:
-    solver: MWISSolver
-    name: str
-    param_grid: dict[str, list[Any]] | None = None
-    is_deterministic: bool = True
-
-    def get_configurations(self) -> Iterator[dict[str, Any]]:
-        if self.param_grid is None:
-            yield {}
-        else:
-            keys = list(self.param_grid.keys())
-            values = list(self.param_grid.values())
-            for combination in product(*values):
-                yield dict(zip(keys, combination))
-
-
-@dataclass
 class RunnerConfig:
-    board_configs: list[BoardConfig]
+    phase: ExperimentPhase
     algorithms_configs: list[AlgorithmConfig]
-    max_card_percents: list[float]
-    boards_per_config: int
+    output_path: Path
     seed: int
-    n_repetitions: int
-    n_workers: int | None = None
-    output_path: Path = Path("output")
 
 
 class ExperimentRunner:
     def __init__(self, config: RunnerConfig) -> None:
-        self.board_configs = config.board_configs
+        self.phase = config.phase
         self.algo_configs = config.algorithms_configs
-        self.max_card_percents = config.max_card_percents
-        self.boards_per_config = config.boards_per_config
         self.rng = random.Random(config.seed)
-        self.n_repetitions = config.n_repetitions
-        self.n_workers = config.n_workers
 
-        self.results_path = config.output_path / "results"
-        self.results_path.mkdir(parents=True, exist_ok=True)
+        self.tables_path = config.output_path / "tables"
+        self.tables_path.mkdir(parents=True, exist_ok=True)
 
         self.logs_path = config.output_path / "logs"
         self.logs_path.mkdir(parents=True, exist_ok=True)
@@ -92,124 +38,146 @@ class ExperimentRunner:
         self.board_config_path = config.output_path / "board_configs"
         self.board_config_path.mkdir(parents=True, exist_ok=True)
 
-    def run_parallel(self) -> None:
+        self.log_counter: dict[str, int] = {}
+        self.csv_files: dict[str, Any] = {}
+        self.csv_writers: dict[str, Any] = {}
+
+    def run_parallel(self, n_workers: int | None = None) -> None:
+        if n_workers is None:
+            n_workers = n_workers or (os.cpu_count() or 1)
+
+        self.board_configs = self.phase.create_board_configs()
+        BoardConfig.save_board_configs(self.board_configs, self.board_config_path)
+
+        self._init_csv_files()
+
+        try:
+            task_args = (
+                (task, self.board_configs, self.phase) for task in self._experiment_tasks()
+            )
+
+            with ProcessPoolExecutor(max_workers=n_workers) as executor:
+                for i, (res, log) in enumerate(
+                    executor.map(_run_single_experiment, task_args, chunksize=1)
+                ):
+                    self._save_result_incremental(res)
+                    if log is not None:
+                        self._save_log_incremental(log)
+
+                    if (i + 1) % 10 == 0:
+                        print(f"Completed {i + 1} tasks...")
+
+        finally:
+            self._close_csv_files()
+
+    def _experiment_tasks(self) -> list[SingleExperimentTask]:
         tasks: list[SingleExperimentTask] = []
-
-        for i, b in enumerate(self.board_configs):
-            self._save_board_config(i, b)
-            for bi in range(self.boards_per_config):
-                board_seed = self.rng.randint(0, 32**2 - 1)
-                board = b.generate(i * self.boards_per_config + bi, board_seed)
-                for max_cards_percent in self.max_card_percents:
+        for i, _ in enumerate(self.board_configs):
+            for bi in range(self.phase.boards_per_config):
+                board_seed = self.rng.randint(0, 2**32 - 1)
+                for max_cards_percent in self.phase.max_cards_percents:
                     for algo in self.algo_configs:
-                        param_grid = algo.get_configurations()
-                        for param in param_grid:
-                            tasks.append((algo, board, max_cards_percent, param))
+                        for params in algo.get_configurations():
+                            params_copy = dict(params)
+                            tasks.append((algo, i, bi, board_seed, max_cards_percent, params_copy))
+        return tasks
 
-        with ProcessPoolExecutor(max_workers=self.n_workers) as executor:
-            futures: list[Future[SingleExperimentResult]] = []
-            for algo, board, max_cards, params in tasks:
-                if not algo.is_deterministic:
-                    algo_rng = random.Random(self.rng.randint(0, 2**32 - 1))
-                    params["rng"] = algo_rng
-                futures.append(
-                    executor.submit(self._run_single_experiment, algo, board, max_cards, params)
-                )
-            results = [f.result() for f in futures]
-
-        results_to_save = [r for r, _ in results]
-        logs_to_save = [log for _, log in results if log is not None]
-
-        self._save_results(results_to_save)
-        self._save_logs(logs_to_save)
-
-    def _run_single_experiment(
-        self,
-        algo: AlgorithmConfig,
-        board: BoardInstance,
-        max_cards_percent: float,
-        params: dict[str, Any],
-    ) -> SingleExperimentResult:
-        base: dict[str, Any] = {
-            "algo": algo.name,
-            "board_id": board.id,
-            "board_config_id": board.config.config_id,
-            "max_cards_percent": max_cards_percent,
-        }
-        max_cards = max(1, int(board.size * max_cards_percent))
-        if algo.is_deterministic:
-            result, elapsed = algo.solver(board.board, max_cards, **params)
-            assert len(result) == 2
-            value, _ = result
-            res: dict[str, Any] = {"value": value, "time": elapsed}
-            base.update(params)
-            base.update(res)
-            return base, None
-
-        else:
-            times: list[float] = []
-            values: list[int] = []
-            logs: list[list[float]] = []
-            iterations = None
-
-            for _ in range(self.n_repetitions):
-                result, elapsed = algo.solver(board.board, max_cards, **params)
-                assert len(result) == 3
-                value, _, log = result
-                iterations, log_value = log
-                times.append(elapsed)
-                values.append(value)
-                logs.append(log_value)
-
-            results: dict[str, Any] = {
-                "num_trials": self.n_repetitions,
-                "value_mean": np.mean(values),
-                "value_std": np.std(values),
-                "value_min": np.min(values),
-                "value_max": np.max(values),
-                "time_mean": np.mean(times),
-                "time_std": np.std(times),
-            }
-
-            assert iterations
-            log_array = np.array(logs)
-            log_info: dict[str, Any] = {
-                "algo": algo.name,
-                "iter": iterations,
-                "eval_mean": np.mean(log_array, axis=0),
-                "eval_std": np.std(log_array, axis=0),
-            }
-
-            params.pop("rng")
-            base.update(params)
-            base.update(results)
-            return base, log_info
-
-    def _save_results(self, results: list[dict[str, Any]]) -> None:
-        df = pd.DataFrame(results)
+    def _init_csv_files(self) -> None:
         for algo in self.algo_configs:
-            partial = df[df["algo"] == algo.name]
-            partial = partial.dropna(axis=1, how="all").reset_index()
-            partial.to_csv(self.results_path / f"{algo.name}.csv", index=True)
+            filepath = self.tables_path / f"{algo.name}.csv"
+            self.csv_files[algo.name] = open(filepath, "w", newline="")
+            self.csv_writers[algo.name] = None
 
-    def _save_logs(self, logs: list[dict[str, Any]]) -> None:
-        for i, log in enumerate(logs):
-            name = cast(str, log["algo"])
-            df = pd.DataFrame(log)
-            df = df.drop(columns=["algo"])
-            df.to_csv(self.logs_path / f"{name}-{i}.csv", index=False)
+    def _close_csv_files(self) -> None:
+        for f in self.csv_files.values():
+            f.close()
 
-    def _save_board_config(self, id: int, config: BoardConfig) -> None:
-        config_dict: dict[str, Any] = {
-            "board_config_id": id,
-            "n_rows": config.n_rows,
-            "n_columns": config.n_columns,
-            "limit_low": config.low,
-            "limit_high": config.high,
+    def _save_result_incremental(self, result: dict[str, Any]) -> None:
+        algo_name = result["algo"]
+
+        if self.csv_writers[algo_name] is None:
+            fieldnames = list(result.keys())
+            writer = csv.DictWriter(self.csv_files[algo_name], fieldnames=fieldnames)
+            writer.writeheader()
+            self.csv_writers[algo_name] = writer
+
+        self.csv_writers[algo_name].writerow(result)
+        self.csv_files[algo_name].flush()
+
+    def _save_log_incremental(self, log: dict[str, Any]) -> None:
+        name = cast(str, log["algo"])
+
+        if name not in self.log_counter:
+            self.log_counter[name] = 0
+
+        df = pd.DataFrame(log)
+        df = df.drop(columns=["algo"])
+        df.to_csv(self.logs_path / f"{name}-{self.log_counter[name]}.csv", index=False)
+
+        self.log_counter[name] += 1
+
+
+def _run_single_experiment(
+    args: tuple[SingleExperimentTask, list[BoardConfig], ExperimentPhase],
+) -> SingleExperimentResult:
+    task, board_conifgs, phase = args
+    algo, board_index, bi, board_seed, max_cards_percent, params = task
+    board_config = board_conifgs[board_index]
+    board = board_config.generate(board_index * phase.boards_per_config + bi, board_seed)
+    if not algo.is_deterministic:
+        algo_rng = random.Random(board_seed)
+        params["rng"] = algo_rng
+
+    base: dict[str, Any] = {
+        "algo": algo.name,
+        "board_id": board.id,
+        "board_config_id": board.config.config_id,
+        "max_cards_percent": max_cards_percent,
+    }
+    max_cards = max(1, int(board.size * max_cards_percent))
+    if algo.is_deterministic:
+        result, elapsed = algo.solver(board.board, max_cards, **params)
+        assert len(result) == 2
+        value, _ = result
+        res: dict[str, Any] = {"value": value, "time": elapsed}
+        base.update(params)
+        base.update(res)
+        return base, None
+
+    else:
+        times: list[float] = []
+        values: list[int] = []
+        logs: list[list[float]] = []
+        iterations = None
+
+        for _ in range(phase.repetitions):
+            result, elapsed = algo.solver(board.board, max_cards, **params)
+            assert len(result) == 3
+            value, _, log = result
+            iterations, log_value = log
+            times.append(elapsed)
+            values.append(value)
+            logs.append(log_value)
+
+        results: dict[str, Any] = {
+            "num_trials": phase.repetitions,
+            "value_mean": np.mean(values),
+            "value_std": np.std(values),
+            "value_min": np.min(values),
+            "value_max": np.max(values),
+            "time_mean": np.mean(times),
+            "time_std": np.std(times),
         }
 
-        with open(self.board_config_path / "board_configs.csv", "a+") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=config_dict.keys())
-            if csvfile.tell() == 0:
-                writer.writeheader()
-            writer.writerow(config_dict)
+        log_array = np.array(logs)
+        log_info: dict[str, Any] = {
+            "algo": algo.name,
+            "iter": iterations,
+            "eval_mean": np.mean(log_array, axis=0),
+            "eval_std": np.std(log_array, axis=0),
+        }
+
+        params.pop("rng")
+        base.update(params)
+        base.update(results)
+        return base, log_info
