@@ -58,7 +58,9 @@ Located in: `src/greedy/`
 - then repeatedly improves randomly chosen windows of size `(k × 4)` by re-optimizing locally using DP.
 
 This is the “fast compromise” method:
-✅ very fast in practice  
+
+✅ very fast in practice
+
 ⚠️ not guaranteed optimal
 
 ---
