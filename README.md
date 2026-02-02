@@ -165,9 +165,3 @@ uv run pytest -q
 
 - Internally, the implementation relies on precomputing valid masks for the 4-row column, their popcounts, and per-column mask weights.  
   This greatly reduces overhead in DP / A* / repair steps.
-
----
-
-## Authors
-- Michał Szwejk
-- Kamil Marszałek
